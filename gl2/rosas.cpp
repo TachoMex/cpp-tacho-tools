@@ -9,91 +9,173 @@ using namespace _2D;
 imagen I;
 
 bool pausa;
-linea l;
-double ang;
-double ang2;
-double ang3;
-double ang4;
+bool trazo;
+
 punto ant;
-punto inicial;
-int anguloColor=0;
+punto centro;
 double dang[10];
+double ang[10];
+double longitudes[10];
+
 
 void renderFunction(){
-	linea l2(l.fin,120,ang);
-	linea l3(l2.fin,100, ang2);
-	//linea l4(l3.fin, 50, ang3);
-	//linea l5(l4.fin, 100, ang4);
 	I.draw();
-	if(pausa){
-		return;
+	int colorLinea=0;
+	punto pendulo=centro;
+	for(int i=0;i<10;i++){
+		glColor(color::hsl(20*i));
+		linea l(pendulo, pendulo+punto::polar(longitudes[i],ang[i]));
+		glDraw(l,1);
+		glColor(color::hsl(20*i+10));
+		primitivas::circulo(pendulo.x, pendulo.y, longitudes[i],1);
+		pendulo=l.fin;
+		if(not pausa)
+		ang[i]+=dang[i];
 	}
-	l=l.rotar(dang[0]);
-	ang+=dang[1];
-	ang2+=dang[2];
-	//ang3-=0.0123;
-	//ang4+=0.2223;
-	dibujaLinea(I,ant.x, ant.y, l3.fin.x, l3.fin.y, color::blanco);
-	ant=l3.fin;
-	//I.read();
-    glColor(color::azul);
-	glDraw(l,1);
-	glColor(color::verde);
-	glDraw(l2,1);
-	glColor(color::amarillo);
-	glDraw(l3,1);
-/*	glColor(color::cyan);
-	glDraw(l4);
-	glColor(color::rojo);
-	glDraw(l5);
-	glColor(color::gris);*/
-	primitivas::circulo(l.inicio.x, l.inicio.y, l.longitud(), 1);
-	glColor(color::naranja);
-	primitivas::circulo(l2.inicio.x, l2.inicio.y, l2.longitud(), 1);
-	glColor(color::morado);
-	primitivas::circulo(l3.inicio.x, l3.inicio.y, l3.longitud(), 1);
-	glColor(color::cafe);
-	/*
-	primitivas::circulo(l4.inicio.x, l4.inicio.y, l4.longitud());
-	glColor(color::azul*0.7);
-	primitivas::circulo(l5.inicio.x, l5.inicio.y, l5.longitud());
-*/
+	if(not trazo)
+	dibujaLinea(I,ant.x, ant.y, pendulo.x, pendulo.y, color::blanco);
+	ant=pendulo;
 	glFlush();
 	glutSwapBuffers();
-	if(distancia(ant, inicial)<0.5){
-		//cout<<ant.toString()<<inicial.toString()<<endl;
-		//cout<<distancia(ant, inicial)<<endl;
-		I.guardaBMP("rosa.bmp");
-		//exit(0);
-	}
-	
-
 	glutTimerFunc(0, (void(*)(int))renderFunction, 0);
 }
 
 void eventoTeclado(unsigned char k, int x, int y){
-	//cout<<k<<endl;
+	switch(k){
+		case '1': 
+			dang[0]+=0.001;
+		break;
+		case 'q':
+			dang[0]-=0.0001;
+		break;
+		case 'a':
+			longitudes[0]++;
+		break;
+		case 'z':
+			longitudes[0]--;
+		break;
 
-	if(k=='a'){
-		I.draw();
-		glFlush();
-	}else if(k=='g'){
-		I.guardaBMP("rosa.bmp");
-	}else if(k<='9' and k>='0'){
-		dang[k-'0']+=0.001;
-	}else if(k=='r'){
-		I=imagen(800,800,color::negro);
-	}else if(k=='p'){
-		pausa^=true;
-		glutTimerFunc(0,(void(*)(int))renderFunction,0);
+		case '2': 
+			dang[1]+=0.001;
+		break;
+		case 'w':
+			dang[1]-=0.0001;
+		break;
+		case 's':
+			longitudes[1]++;
+		break;
+		case 'x':
+			longitudes[1]--;
+		break;
+
+		case '3': 
+			dang[2]+=0.001;
+		break;
+		case 'e':
+			dang[2]-=0.0001;
+		break;
+		case 'd':
+			longitudes[2]++;
+		break;
+		case 'c':
+			longitudes[2]--;
+		break;
+
+		case '4': 
+			dang[3]+=0.001;
+		break;
+		case 'r':
+			dang[3]-=0.0001;
+		break;
+		case 'f':
+			longitudes[3]++;
+		break;
+		case 'v':
+			longitudes[3]--;
+		break;
+
+		case '5': 
+			dang[4]+=0.001;
+		break;
+		case 't':
+			dang[4]-=0.0001;
+		break;
+		case 'g':
+			longitudes[4]++;
+		break;
+		case 'b':
+			longitudes[4]--;
+		break;
+
+		case '6': 
+			dang[5]+=0.001;
+		break;
+		case 'y':
+			dang[5]-=0.0001;
+		break;
+		case 'h':
+			longitudes[5]++;
+		break;
+		case 'n':
+			longitudes[5]--;
+		break;
+
+		case '7': 
+			dang[6]+=0.001;
+		break;
+		case 'u':
+			dang[6]-=0.0001;
+		break;
+		case 'j':
+			longitudes[6]++;
+		break;
+		case 'm':
+			longitudes[6]--;
+		break;
+
+		case '8': 
+			dang[7]+=0.001;
+		break;
+		case 'i':
+			dang[7]-=0.0001;
+		break;
+		case 'k':
+			longitudes[7]++;
+		break;
+		case ',':
+			longitudes[7]--;
+		break;
+
+		case 16:
+			pausa^=true;
+			glutTimerFunc(0,(void(*)(int))renderFunction,0);
+		break;
+		case 3:
+			I=imagen(800, 800, color::negro);
+		break;
+		case 7:
+			I.guardaBMP("rosas.bmp");
+		break;
+		case 18:
+			for(int i=0;i<10;i++){
+				longitudes[i]=0;
+				dang[i]=0;
+				ang[i]=0;
+			}
+		break;
+
+		case 20: 
+			trazo^=true;
+		break;
+		default:
+			cout<<(int)k<<endl;
 	}
 
 }
 
 
 int main(int argc, char** argv){
-	l=linea(punto(400,400),punto(500,400));
-	ant=inicial=punto(720,400);
+	centro=ant=punto(400,400);
     glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_DOUBLE);
 	glutInitWindowSize(800,800);

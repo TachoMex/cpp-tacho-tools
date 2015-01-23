@@ -3,30 +3,32 @@
 #include"../macros.h"
 #include"linea.h"
 	namespace _2D{
-	class rectangulo : public linea {
+
+	template<class T>
+	class rectangulo : public linea<T> {
 		public:
-			rectangulo():linea(){}
-			rectangulo(punto a, punto b):linea(a, b){}
-			rectangulo(punto a, double b, double c): linea(a,a+punto(b,c)){}
-			double base()const{
-				return fin.x-inicio.x;
+			rectangulo():linea<T>(){}
+			rectangulo(punto<T> a, punto<T> b):linea<T>(a, b){}
+			rectangulo(punto<T> a, T b, T c): linea<T>(a,a+punto<T>(b,c)){}
+			T base() const{
+				return this->fin.x-this->inicio.x;
 			}
-			double altura()const{
-				return fin.y-inicio.y;
+			T altura() const{
+				return this->fin.y-this->inicio.y;
 			}
-			double area()const{
+			T area() const{
 				return base()*altura();
 			}
-			punto centro()const{
-				return punto((inicio.x+fin.x)/2,(inicio.y+fin.y)/2);
+			punto<T> centro()const{
+				return punto<T>((this->inicio.x+this->fin.x)/2,(this->inicio.y+this->fin.y)/2);
 			}
-			rectangulo interseccion(rectangulo o)const{
-				punto a(MAYOR(inicio.x, o.inicio.x), MAYOR(inicio.y, o.inicio.y));
-				punto b(MENOR(fin.x, o.fin.x), MENOR(fin.y, o.fin.y));
+			rectangulo<T> interseccion(rectangulo<T> o)const{
+				punto<T> a(MAYOR(this->inicio.x, o.inicio.x), MAYOR(this->inicio.y, o.inicio.y));
+				punto<T> b(MENOR(this->fin.x, o.fin.x), MENOR(this->fin.y, o.fin.y));
 				if(a.x > b.x or a.y > b.y)
-					return rectangulo(punto(0,0),0,0);
+					return rectangulo<T>();
 				else 
-					return rectangulo(a, b);
+					return rectangulo<T>(a, b);
 			}
 	};
 }

@@ -311,7 +311,7 @@ class imagen{
 				for(int j=0;j<x;j++)
 					try{f<<en(i,j);}catch(int t){f<<color();}
 				for(int j=0;j<ajuste;j++)
-					f<<color();
+					f<<'\0';
 			}
 			f.close();
 		}

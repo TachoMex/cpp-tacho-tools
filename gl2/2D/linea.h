@@ -5,51 +5,65 @@
 #include <cmath>
 
 namespace _2D{
+	template<class T>
 	class linea{
 		public:
-			punto inicio;
-			punto fin;
-			linea();
-			linea(const punto& a,const punto& b);
-			linea(const punto& ini, double r, double a);
-			double angulo() const;
-			linea rotar(double ang)const ;		
-			double longitud() const;
-			linea operator*(double d) const;
-			linea operator*=(double d);
-			std::string toString()const {
+			punto<T> inicio;
+			punto<T> fin;
+			linea<T>();
+			linea<T>(const punto<T>& a,const punto<T>& b);
+			linea<T>(const punto<T>& ini, T r, T a);
+			T angulo() const;
+			linea<T> rotar(T ang)const ;		
+			T longitud() const;
+			linea operator*(T d) const;
+			linea operator*=(T d);
+			std::string toString()const{
 				return inicio.toString()+std::string("->")+fin.toString();
 			}
 	};
 
-	punto interseccion(const linea& a,const linea& b);
-	linea::linea(){
-		inicio=fin=punto(0,0);
+	template<class T>
+	punto<T> interseccion(const linea<T>& a,const linea<T>& b);
+	
+	template<class T>
+	linea<T>::linea():inicio(),fin(){
 	}
-	linea::linea(const punto& a,const punto& b){
+
+	template<class T>
+	linea<T>::linea(const punto<T>& a,const punto<T>& b){
 		inicio=a;
 		fin=b;
 	}
-	linea::linea(const punto& ini, double r, double a){
+	
+	template<class T>
+	linea<T>::linea(const punto<T>& ini, T r, T a){
 		inicio=ini;
-		fin=punto(ini.x+r*cos(a), ini.y+r*sin(a));
+		fin=punto<T>(ini.x+r*cos(a), ini.y+r*sin(a));
 	}
 
-	double linea::angulo()const {
+	template<class T>
+	T linea<T>::angulo()const {
 		return (fin - inicio).angulo();
 	}
 
-	linea linea::rotar(double ang)const {
+	template<class T>
+	linea<T> linea<T>::rotar(T ang)const {
 		return linea(inicio, longitud(), angulo()+ang); 
 	}
 
-	double linea::longitud()const{
+
+	template<class T>
+	T linea<T>::longitud()const{
 		return (fin-inicio).norma();
 	}
-	linea linea::operator*(double d)const{
+
+	template<class T>
+	linea<T> linea<T>::operator*(T d)const{
 		return linea(inicio, longitud()*d, angulo());
 	}
-	linea linea::operator*=(double d){
+	template<class T>
+	linea<T> linea<T>::operator*=(T d){
 		*this=*this*d;
 		return *this;
 	}

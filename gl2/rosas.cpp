@@ -4,6 +4,10 @@
 #include "geometria.h"
 #include "primitivas.h"
 #include "gl2.h"
+
+const int X_SIZE = 600;
+const int Y_SIZE = 600;
+
 using namespace std;
 using namespace _2D;
 imagen I;
@@ -11,8 +15,8 @@ imagen I;
 bool pausa;
 bool trazo;
 
-punto ant;
-punto centro;
+punto<double> ant;
+punto<double> centro;
 double dang[10];
 double ang[10];
 double longitudes[10];
@@ -21,10 +25,10 @@ double longitudes[10];
 void renderFunction(){
 	I.draw();
 	int colorLinea=0;
-	punto pendulo=centro;
+	punto<double> pendulo=centro;
 	for(int i=0;i<10;i++){
 		glColor(color::hsl(20*i));
-		linea l(pendulo, pendulo+punto::polar(longitudes[i],ang[i]));
+		linea<double> l(pendulo, pendulo+punto<double>::polar(longitudes[i],ang[i]));
 		glDraw(l,1);
 		glColor(color::hsl(20*i+10));
 		primitivas::circulo(pendulo.x, pendulo.y, longitudes[i],1);
@@ -175,16 +179,16 @@ void eventoTeclado(unsigned char k, int x, int y){
 
 
 int main(int argc, char** argv){
-	centro=ant=punto(400,400);
+	centro=ant=punto<double>(X_SIZE/2,Y_SIZE/2);
     glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_DOUBLE);
-	glutInitWindowSize(800,800);
+	glutInitWindowSize(X_SIZE,Y_SIZE);
 	glutInitWindowPosition(0,0);
 	glutCreateWindow("Rosas");
 	glClearColor(0,0,0, 0.0);
 	glMatrixMode(GL_PROJECTION);
     glClear(GL_COLOR_BUFFER_BIT);
-	gluOrtho2D(0,800,0,800); 
+	gluOrtho2D(0,X_SIZE,0,Y_SIZE); 
 	glFlush();
 	I.read();
 	glutDisplayFunc(renderFunction);

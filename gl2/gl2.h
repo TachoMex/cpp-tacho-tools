@@ -80,14 +80,16 @@
 
 
 #ifdef PUNTO2D_H
-	inline void glVertex(const _2D::punto& p){
+	template<class T>
+	inline void glVertex(const _2D::punto<T>& p){
 		glVertex2f((GLfloat)p.x, (GLfloat)p.y);
 	}
 #endif
 
 #ifdef LINEA2D_H
 
-	inline void glDraw(const _2D::linea& l, int size=0){
+	template<class T>
+	inline void glDraw(const _2D::linea<T>& l, int size=0){
 		#ifdef PRIMITIVAS_H
 			primitivas::linea(l.inicio.x, l.inicio.y, l.fin.x, l.fin.y, size);
 		#else

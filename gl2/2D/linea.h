@@ -16,11 +16,21 @@ namespace _2D{
 			T angulo() const;
 			linea<T> rotar(T ang)const ;		
 			T longitud() const;
+			T longitud2() const;
 			linea operator*(T d) const;
 			linea operator*=(T d);
 			std::string toString()const{
 				return inicio.toString()+std::string("->")+fin.toString();
 			}
+		//private:
+			static T ccw(const punto<T> & a, const punto<T>& b, const punto<T>& c){
+				return productoCruz(b-a,c-a);
+			}
+		public:
+			bool colisiona(const linea<T>& b)const {
+				return (ccw(inicio,fin,b.inicio) * ccw(inicio, fin, b.fin) < 0) and (ccw(b.inicio, b.fin, inicio)*ccw(b.inicio, b.fin, fin)<0);
+			}
+
 	};
 
 	template<class T>
@@ -55,6 +65,10 @@ namespace _2D{
 
 	template<class T>
 	T linea<T>::longitud()const{
+		return (fin-inicio).norma();
+	}
+	template<class T>
+	T linea<T>::longitud2()const{
 		return (fin-inicio).norma();
 	}
 

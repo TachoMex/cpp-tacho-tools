@@ -31,6 +31,9 @@ namespace _2D{
 			punto<T> operator*(T r)const {
 				return punto<T>(x*r, y*r);
 			}
+			punto<T> operator/(T r)const{
+				return punto<T>(x/r, y/r);
+			}
 			static punto<double> polar(double r , double ang){
 				return punto(r*cos(ang), r*sin(ang));
 			}
@@ -83,7 +86,7 @@ namespace _2D{
 
 	template<class T>
 	T productoCruz(const punto<T>& a,const punto<T>& b){
-		return a.x*b.y-b.x*a.y;
+		return a.x*b.y-a.y*b.x;
 	}
 }
 #endif

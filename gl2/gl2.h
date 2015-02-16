@@ -1,3 +1,5 @@
+#include <GL/freeglut.h>
+#include <GL/gl.h>
 #ifndef GL2_H
 #ifdef COLOR_H
 
@@ -83,6 +85,22 @@
 	template<class T>
 	inline void glVertex(const _2D::punto<T>& p){
 		glVertex2f((GLfloat)p.x, (GLfloat)p.y);
+	}
+
+	template<class T>
+	inline void glDraw(const _2D::punto<T>& p, int tam = 1){
+		if(tam==1){
+			glBegin(GL_POINTS);
+			glVertex2f((GLfloat)p.x, (GLfloat)p.y);
+			glEnd();
+		}else{
+			glBegin(GL_QUADS);
+			glVertex2f((GLfloat)p.x, (GLfloat)p.y);
+			glVertex2f((GLfloat)p.x+tam, (GLfloat)p.y);
+			glVertex2f((GLfloat)p.x+tam, (GLfloat)p.y+tam);
+			glVertex2f((GLfloat)p.x, (GLfloat)p.y+tam);
+			glEnd();
+		}
 	}
 #endif
 

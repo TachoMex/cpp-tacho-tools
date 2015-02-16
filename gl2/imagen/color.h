@@ -122,6 +122,14 @@ class color{
 			return color(r, g, b);
 		}
 
+		static color gris(int n){
+			if(n<=0)
+				return color::negro;
+			if(n>=255)
+				return color::blanco;
+			return color(n, n, n);
+		}
+
 		static color azul;
 		static color rojo;
 		static color blanco;
@@ -133,7 +141,6 @@ class color{
 		static color cyan;
 		static color cafe;
 		static color rosa;
-		static color gris;
 };
 
 color color::azul=color(0,0,255);
@@ -147,7 +154,6 @@ color color::naranja=color(255,128,0);
 color color::negro=color(0,0,0);
 color color::cafe=color(153,76,0);
 color color::rosa=color(255,153,204);
-color color::gris=color(127,127,127);
 
 std::istream& operator>>(std::istream& s, color& c){
 	if(s==std::cin){

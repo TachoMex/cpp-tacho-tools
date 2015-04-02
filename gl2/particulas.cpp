@@ -9,28 +9,28 @@ const int SCREEN_Y = 600;
 const char * WINDOW_NAME = "Particulas";
 const double g=0.05;
 const int radio=5;
-const punto<double> centroSol(SCREEN_X/2, SCREEN_Y/2);
+const Punto<double> centroSol(SCREEN_X/2, SCREEN_Y/2);
 
 class particula{
 	public:
-		punto<double> posicion;
-		punto<double> velocidad;
-		punto<double> aceleracion;	
+		Punto<double> posicion;
+		Punto<double> velocidad;
+		Punto<double> aceleracion;	
 		static double dt;
 	private:
-		color col;
+		Color col;
 
 	public:
 		particula(){
 
 		}
-		particula(punto<double> p, punto<double> v, punto<double> a, color c){
+		particula(const Punto<double>& p,const Punto<double>& v,const Punto<double>& a,const Color& c){
 			posicion=p;
 			velocidad=v;
 			aceleracion=a;
 			col=c;
 		}
-		particula(punto<double> p, color c):velocidad(),aceleracion(){
+		particula(const Punto<double>& p, const Color& c):velocidad(),aceleracion(){
 			posicion=p;
 			col=c;
 		}
@@ -52,17 +52,17 @@ vector<particula> v;
 
 void renderFunction(){
 	glClear(GL_COLOR_BUFFER_BIT); 
-	glColor(color::amarillo);
+	glColor(Color::amarillo);
 	for(int i=-radio;i<=radio;i++){
 		for(int j=-radio;j<=radio;j++){
 			if(i*i+j*j <= radio*radio + radio/2){
-				glDraw(centroSol+punto<double>(i,j));
+				glDraw(centroSol+Punto<double>(i,j));
 			}
 		}
 	}
 
 	for(particula& p: v){
-		punto<double> dist = centroSol - p.posicion;
+		Punto<double> dist = centroSol - p.posicion;
 		double r = dist.norma2();
 
 		p.dibujar();
@@ -78,7 +78,7 @@ void renderFunction(){
 }
 
 void eventoClick(int b , int e, int x, int y){
-	v.push_back(particula(punto<double>(x, SCREEN_Y-y),punto<double>(0.5,0), punto<double>(0,0),color::hsl(v.size()*7)));
+	v.push_back(particula(Punto<double>(x, SCREEN_Y-y),Punto<double>(0.5,0), Punto<double>(0,0),Color::hsl(v.size()*7)));
 }
 
 void eventoArrastre(int x, int y){

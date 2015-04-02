@@ -10,34 +10,34 @@ const int Y_SIZE = 600;
 
 using namespace std;
 using namespace _2D;
-imagen I;
+Imagen I;
 
 bool pausa;
 bool trazo;
 
-punto<double> ant;
-punto<double> centro;
+Punto<double> ant;
+Punto<double> centro;
 double dang[10];
 double ang[10];
 double longitudes[10];
 
 
 void renderFunction(){
-	I.draw();
+	glDrawPixels(I);
 	int colorLinea=0;
-	punto<double> pendulo=centro;
+	Punto<double> pendulo=centro;
 	for(int i=0;i<10;i++){
-		glColor(color::hsl(20*i));
-		linea<double> l(pendulo, pendulo+punto<double>::polar(longitudes[i],ang[i]));
+		glColor(Color::hsl(20*i));
+		Linea<double> l(pendulo, pendulo+Punto<double>::polar(longitudes[i],ang[i]));
 		glDraw(l,1);
-		glColor(color::hsl(20*i+10));
+		glColor(Color::hsl(20*i+10));
 		primitivas::circulo(pendulo.x, pendulo.y, longitudes[i],1);
 		pendulo=l.fin;
 		if(not pausa)
 		ang[i]+=dang[i];
 	}
 	if(not trazo)
-	dibujaLinea(I,ant.x, ant.y, pendulo.x, pendulo.y, color::blanco);
+	dibujaLinea(I,ant.x, ant.y, pendulo.x, pendulo.y, Color::blanco);
 	ant=pendulo;
 	glFlush();
 	glutSwapBuffers();
@@ -155,7 +155,7 @@ void eventoTeclado(unsigned char k, int x, int y){
 			glutTimerFunc(0,(void(*)(int))renderFunction,0);
 		break;
 		case 3:
-			I=imagen(800, 800, color::negro);
+			I=Imagen(800, 800, Color::negro);
 		break;
 		case 7:
 			I.guardaBMP("rosas.bmp");
@@ -179,7 +179,7 @@ void eventoTeclado(unsigned char k, int x, int y){
 
 
 int main(int argc, char** argv){
-	centro=ant=punto<double>(X_SIZE/2,Y_SIZE/2);
+	centro=ant=Punto<double>(X_SIZE/2,Y_SIZE/2);
     glutInit(&argc,argv);
 	glutInitDisplayMode(GLUT_DOUBLE);
 	glutInitWindowSize(X_SIZE,Y_SIZE);
@@ -190,7 +190,7 @@ int main(int argc, char** argv){
     glClear(GL_COLOR_BUFFER_BIT);
 	gluOrtho2D(0,X_SIZE,0,Y_SIZE); 
 	glFlush();
-	I.read();
+	glReadPixels(I);
 	glutDisplayFunc(renderFunction);
 	glutKeyboardFunc(eventoTeclado);
 	glutMainLoop();   

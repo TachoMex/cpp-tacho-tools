@@ -1,40 +1,41 @@
 #ifndef LINEA4D_H
 #define LINEA4D_H
 
-#include"punto.h"
+#include "punto.h"
 
 namespace _4D{
-	class linea{
+	template<class T>
+	class Linea{
 		public:
-			punto inicio, fin;
+			Punto<T> inicio, fin;
 			
-			linea():inicio(),fin(){}
+			Linea():inicio(),fin(){}
 			
-			linea(punto i, punto f){
+			Linea(const Punto<T>& i, const Punto<T>& f){
 				inicio=i;
 				fin=f;
 			}
 			
-			linea(const linea& l){
+			Linea(const Linea<T>& l){
 				inicio=l.inicio;
 				fin=l.fin;
 			}
 	
-			linea(punto i, double hx, double hy, double hz, double hw){
+			Linea(const Punto<T> i, const T& hx, const T& hy, const T& hz, const T& hw){
 				inicio=i;
-				fin=i+punto(hx, hy, hz,hw);
+				fin=i+Punto<T>(hx, hy, hz,hw);
 			}
 			
-			double longitud(){
+			T longitud()const{
 				return (fin-inicio).norma();
 			}
 			
-			std::string toString(){
+			std::string toString()const{
 				return inicio.toString()+std::string("->")+fin.toString();
 			}
 			
-			linea operator*(double k){
-				return linea(inicio,inicio+(fin-inicio)*k); 
+			Linea operator*(const T& k)const {
+				return Linea(inicio,inicio+(fin-inicio)*k); 
 			}
 	};
 }

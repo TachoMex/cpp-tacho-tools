@@ -12,7 +12,7 @@ const int SCREEN_X = 800;
 const int SCREEN_Y = 800;
 const char * WINDOW_NAME = "Nube";
 
-_3D::punto camara(40,10,20);
+_3D::Punto<double> camara(40,10,20);
 
 
 
@@ -129,8 +129,8 @@ void renderFunction(){
 
 	for(int i=1;i<I.filas();i++){
 		for(int j=1;j<I.columnas();j++){
-			glDraw(linea(punto(i*dl,I(i,j).luz(),j*dl),punto(i*dl,I(i,j-1).luz(),j*(dl-1))));
-			glDraw(linea(punto(i*dl,I(i,j).luz(),j*dl),punto(i*(dl-1),I(i-1,j).luz(),j*dl)));
+			glDraw(Linea<double>(Punto<double>(i*dl,I(i,j).luz(),j*dl),Punto<double>(i*dl,I(i,j-1).luz(),j*(dl-1))));
+			glDraw(Linea<double>(Punto<double>(i*dl,I(i,j).luz(),j*dl),Punto<double>(i*(dl-1),I(i-1,j).luz(),j*dl)));
 		}
 	}
 

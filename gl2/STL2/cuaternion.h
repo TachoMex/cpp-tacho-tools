@@ -70,8 +70,8 @@ struct cuaternion{
 		}
 
 		#ifdef PUNTO4D_H
-		_4D::punto convertir(cuaternion q){
-			return _4D::punto(q.r,q.i,q.j,q.k);
+		_4D::Punto<double> convertir(cuaternion q){
+			return _4D::Punto<double>(q.r,q.i,q.j,q.k);
 		}
 		#endif
 #endif

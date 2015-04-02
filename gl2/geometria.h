@@ -22,8 +22,8 @@ _2D::Punto<T> conversionParalela(const _3D::Punto<T>& desde,const _3D::Punto<T>&
 }
 
 template<class T>
-_3D::Punto<T> conversionParalela(const _4D::punto& desde,const  _4D::punto& hacia,const _4D::punto& arriba,const _4D::punto& sobre,const _4D::punto&  p){
-	_4D::punto x = _4D::puntoDeVista( desde,  hacia,  arriba,  sobre, p);
+_3D::Punto<T> conversionParalela(const _4D::Punto<T>& desde,const  _4D::Punto<T>& hacia,const _4D::Punto<T>& arriba,const _4D::Punto<T>& sobre,const _4D::Punto<T>&  p){
+	_4D::Punto<T> x = _4D::PuntoDeVista<T>( desde,  hacia,  arriba,  sobre, p);
 	return _3D::Punto<T>(x.x, x.y, x.z);
 }
 
@@ -33,7 +33,7 @@ _2D::Linea<T> conversionParalela(const _3D::Punto<T>& desde,const _3D::Punto<T>&
 }
 
 template<class T>
-_3D::Linea<T> conversionParalela(const _4D::punto& desde,const _4D::punto& hacia, const _4D::punto arriba, _4D::punto sobre, _4D::linea l){
+_3D::Linea<T> conversionParalela(const _4D::Punto<T>& desde,const _4D::Punto<T>& hacia, const _4D::Punto<T>& arriba,const _4D::Punto<T>& sobre,const _4D::Linea<T>& l){
 	return _3D::Linea<T>(conversionParalela<T>(desde,hacia,arriba,sobre,l.inicio), conversionParalela<T>(desde,hacia,arriba,sobre,l.fin));
 }
 

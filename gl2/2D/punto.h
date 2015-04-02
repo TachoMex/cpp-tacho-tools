@@ -74,6 +74,14 @@ namespace _2D{
 		return sqrt( dx*dx + dy*dy);
 	}
 
+
+	template<class T>
+	T distanciaM(const Punto<T>& a,const Punto<T>& b){
+		T dx= std::abs(a.x-b.x);
+		T dy= std::abs(a.y-b.y);
+		return dx+dy;
+	}
+
 	template<class T>
 	T distancia2(const Punto<T>& a,const Punto<T>& b){
 		T dx= std::abs(a.x-b.x);

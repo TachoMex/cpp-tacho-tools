@@ -24,12 +24,25 @@ namespace _2D{
 			Linea operator/=(T d);
 			std::string toString()const{
 				return inicio.toString()+std::string("->")+fin.toString();
-			}
-			
-		public:
+			}			
 			bool colisiona(const Linea<T>& b)const {
 				return (ccw(inicio,fin,b.inicio) * ccw(inicio, fin, b.fin) < 0) and (ccw(b.inicio, b.fin, inicio)*ccw(b.inicio, b.fin, fin)<0);
 			}
+			Linea bisector(const T& x1, const T& x2)const{
+				T dx = fin.x-inicio.x;
+				T dy = fin.y-inicio.y;
+				T m = -dx/dy;
+				Punto<T> centro;
+				centro.x = (inicio.x+fin.x)/2;
+				centro.y = (inicio.y+fin.y)/2;
+				T b = centro.y - m * centro.x;
+				auto f = [&](const T& p){
+					return Punto<T>(p,m*p+b);
+				};
+				return Linea<T>(f(x1),f(x2));
+			}
+
+
 
 	};
 

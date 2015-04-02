@@ -1,6 +1,6 @@
 #include <iostream>               //Entradas y salidas debugging
 #include "imagen/imagen.h"        //Exportacion de resultados
-#include "deulaney.h"   	   	  //Para calcular triangulacionaciones
+#include "voronoi.h"   	   	      //Para calcular triangulacionaciones
 #include "gl2.h"				  //Interfaz
 #include <cstdlib> 				  //Random
 #include <chrono>				  //Debugging con sleeps
@@ -16,83 +16,29 @@ const char * WINDOW_NAME = "Voronoi";
 
 
 
-class voronoi_mas_simple{
-private:
-	vector<Punto<llint>> puntos;
-	int x, y;
-	int n, m;
-	Imagen grafica;
-public:
-	voronoi_mas_simple(){	
-	}
-	voronoi_mas_simple(int x, int y,const vector<Punto<llint>>& v){
-		this->x = x;
-		this->y = y;
-		grafica = obtenerImagen();		
-		puntos = v;
-	}
-
-	Imagen obtenerImagen(){
-		Imagen I(x,y);		
-		for(int i=0;i<y;i++){
-			for(int j=0;j<x;j++){
-				llint dist_min = x*y*x*y;
-				int id = 0;
-				Punto<llint> actual(j,i);
-				int cant_pts = 1;
-				for(int k=0;k<puntos.size();k++){
-					llint dist = distancia2(actual,puntos[k]);
-					if(dist<dist_min){
-						dist_min = dist;
-						id=k;
-						cant_pts=1;
-					}else if(dist == dist_min){
-						cant_pts++;
-					}
-				}
-				try{
-					I.en((int)actual.y,(int)actual.x)  =Color::hsl(113*id);
-				}catch(...){
-
-				}
-					
-			}
-		}
-
-		for(auto p:puntos){
-			I.en((int)p.y,(int)p.x) = Color::rojo;
-		}
-
-		return I-I.laplace().umbral(1,Color::negro, Color::blanco);
-	}
-	
-};
 
 
-class voronoi_simple{
+class interfaz{
 private:
 	//Datos de entrada
 	Punto<int> tam;
 	Punto<int> tamMat;
-	vector<Punto<llint>> puntos;
-	
-	//Calculo de la triangulacion
-	Deulaney<llint> deulaney;
-	vector<Triangulo<llint>> triangulos;
+	Voronoi<llint> voronoi;
+	vector<Punto<llint>> puntos; //Puntos generados
 
-	//Calculo de las regiones
-	vector<vector<bool>> G; //Grafo que representa si 2 triangulos tienen un lado en comun
-	
+	//resultados
+	vector<vector<bool>> triangulacion; //Grafo que representa 2 puntos deben conectarse segun la triangulacion de delaunay
+	vector<Linea<llint>> lineas;		    //Lineas del diagrama
+
 public:
 	bool cuadricula;
 	bool grafica_puntos;
 	bool grafica_triangulacion;
 	bool grafica_voronoi;
-	bool grafica_circulos;
-	voronoi_simple(){	
+	interfaz(){	
 	}
-	voronoi_simple(int x, int y, int n, int m){
-		grafica_circulos = grafica_voronoi = cuadricula = grafica_puntos = grafica_triangulacion = true;
+	interfaz(int x, int y, int n, int m){
+		grafica_voronoi = cuadricula = grafica_puntos = grafica_triangulacion = true;
 		tam = Punto<int>(x,y);
 		tamMat = Punto<int>(n,m);
 		int dx = x/n;
@@ -102,33 +48,29 @@ public:
 		//Generacion de los puntos aleatorios
 		for(int i=0;i<n;i++){
 			for(int j=0;j<m;j++){
-				deulaney.agregaPunto(Punto<llint>(dx*i+rand()%dx,dy*j+rand()%dy));
+				voronoi.agregaPunto(Punto<llint>(dx*i+rand()%dx,dy*j+rand()%dy));
 			}
 		}
-		deulaney.calcular();
-		puntos=deulaney.damePuntos();
-		triangulos = deulaney.dameTriangulos();
 
-		voronoi_mas_simple vms(x,y,puntos);
+
+		voronoi.calcular();
+		puntos=voronoi.damePuntos();
+		lineas=voronoi.dameLineas();
+		triangulacion=voronoi.dameGrafoTriangulacion();
+
+		/*
+		//debugging, para comprobar contra un resultado exacto
+		VoronoiNoGeometrico<llint> vms(x,y,puntos,distanciaM);
 		vms.obtenerImagen().guardaBMP("vms.bmp");
+		*/
 	
-		//inicializacion del grafo
-		G = vector<vector<bool>>(triangulos.size(),vector<bool>(triangulos.size(),false));	
-
-		//Calculo de los triangulos adyacentes
-		for(int i=0;i<triangulos.size();i++){
-			for(int j=i+1;j<triangulos.size();j++){
-				if(comparteLado(triangulos[i],triangulos[j])){
-					G[i][j]=G[j][i]=true;
-				}
-			}
-		}	
 
 
 		
 	}
 
 	void dibujar(){
+		cout<<"Empezando a dibujar"<<endl;
 
 		int dx = tam.x/tamMat.x;
 		int dy = tam.y/tamMat.y;
@@ -143,42 +85,32 @@ public:
 		}
 		if(grafica_puntos){
 			glColor(Color::rojo);
-			for(int i=0;i<puntos.size();i++){
-				glDraw(puntos[i],5);
-			}
+			glDraw(puntos,5);
 		}
-		if(grafica_triangulacion){
+		/*if(grafica_triangulacion){
 			int k=0;
-			for(auto t: triangulos){
-				glColor(Color::hsl(k++*17));//blanco);
-				glDraw(t);
-				glColor(Color::azul);
-				glDraw(t.centroDeGravedad(),3);
+			cout<<"tam G:"<<triangulacion.size()<<endl;
+			for(int i=0;i<triangulacion.size();i++){
+				cout<<"tam G["<<i<<"]:"<<triangulacion[i].size()<<endl;
+				for(int j=i+1;j<triangulacion[i].size();j++){
+					cout<<"Le valio burguer :v"<<endl;
+					if(triangulacion[i][j]){
+						glColor(Color::hsl(k++*17));//blanco);
+						glDraw(Linea<llint>(puntos[i],puntos[j]));
+					}
+				}
 			}			
-		}
+		}*/
+		cout<<"Completado!"<<endl;
 		if(grafica_voronoi){
 			int k=0;
 			glColor(Color::verde);
-			for(int i=0;i<G.size();i++){
-				for(int j=0;j<G.size();j++){
-					if(G[i][j]){
-						//glColor(Color::hsl(k++*17));
-						glDraw(Linea<llint>(triangulos[i].centroDeGravedad(),triangulos[j].centroDeGravedad()));
-					}
-				}
-			}
-		}
-		if(grafica_circulos){
-			int k=0;
-			for(auto t: triangulos){
-				glColor(Color::hsl(k++*17));
-				glDraw(Circulo<llint>(t.p1,t.p2,t.p3));
-			}
+			glDraw(lineas);		
 		}
 	}
 };
 
-voronoi_simple vs;
+interfaz vs;
 
 void renderFunction(){
 	glClear(GL_COLOR_BUFFER_BIT); 
@@ -201,16 +133,13 @@ void eventoTeclado(unsigned char k, int x, int y){
 		case 'v':
 			vs.grafica_voronoi^=true;
 			break;
-		case 'c':
-			vs.grafica_circulos^=true;
-			break;
 	}
 	glutPostRedisplay();
 }
 
 int main(int argc, char** argv){ 
 	srand(time(NULL));
-	vs = voronoi_simple(SCREEN_X,SCREEN_Y,3,3);
+	vs = interfaz(SCREEN_X,SCREEN_Y,15,15);
 	glutInit(&argc,argv); 
 	glutInitDisplayMode(GLUT_DOUBLE); 
 	glutInitWindowSize(SCREEN_X,SCREEN_Y); 

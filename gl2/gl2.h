@@ -1,6 +1,10 @@
+#ifndef GL2_H
+#define GL2_H
 #include <GL/freeglut.h>
 #include <GL/gl.h>
-#ifndef GL2_H
+#include <vector>
+
+
 #ifdef COLOR_H
 
 	inline void glColor(const Color& c){
@@ -11,9 +15,7 @@
 	inline void glColorAlpha(const Color& c, unsigned char alpha = 255){
 		glColor4ub(c.r, c.g, c.b,alpha);
 	}
-
 #endif
-
 #ifdef PUNTO3D_H
 
 	template<class T>
@@ -41,7 +43,6 @@
 #endif
 
 #ifdef IMAGEN_H
-
 	void drawAt(const Imagen& M, int h, int k){
 		glBegin(GL_POINTS);
 		for(int i=0;i<M.y;i++)
@@ -180,6 +181,37 @@
 			glDraw(_2D::Linea<T>(t.p1,t.p2),size);
 			glDraw(_2D::Linea<T>(t.p2,t.p3),size);
 			glDraw(_2D::Linea<T>(t.p3,t.p1),size);
+		}
+	}
+#endif
+
+
+#ifdef COLOR_H
+	template<class T>
+	void glDrawHSL(const std::vector<T>& v, int salto, int inicio = 0){
+		int k=inicio;
+		for(T e: v){
+			glColor(Color::hsl(k));
+			k+=salto;
+			glDraw(e);
+		}
+	}
+#endif
+
+
+
+template<class T>
+void glDraw(const std::vector<T>& v){
+	for(T e: v){
+		glDraw(e);
+	}
+}
+
+#ifdef PUNTO2D_H
+	template<class T>
+	void glDraw(const std::vector<_2D::Punto<T>>& v, int tam = 0){
+		for(auto e: v){
+			glDraw(e,tam);
 		}
 	}
 #endif

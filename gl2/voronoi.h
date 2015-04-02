@@ -95,6 +95,7 @@ public:
 	void calcular(){
 		delaunay.calcular();
 		triangulos = delaunay.dameTriangulos();
+		puntos = delaunay.damePuntos();
 		//inicializacion del grafo
 		G = std::vector<std::vector<bool>>(triangulos.size(),std::vector<bool>(triangulos.size(),false));	
 		//Calculo de los triangulos adyacentes

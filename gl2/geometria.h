@@ -8,29 +8,33 @@
 
 #include "2D/linea.h"
 #include "2D/punto.h"
+#include "2D/triangulo.h"
 #include "2D/rectangulo.h"
+#include "2D/circulo.h"
 
 #include "4D/punto.h"
 #include "4D/linea.h"
 
 template<class T>
-_2D::punto<T> conversionParalela(const _3D::punto& desde,const _3D::punto& hacia,const _3D::punto& arriba,const _3D::punto& p){
-	p = _3D::puntoDeVista(desde,hacia,arriba,p);
-	return _2D::punto<T>(p.x,p.y);
-}
-
-_3D::punto conversionParalela(_4D::punto desde, _4D::punto hacia, _4D::punto arriba, _4D::punto sobre, _4D::punto  p){
-	p = _4D::puntoDeVista( desde,  hacia,  arriba,  sobre, p);
-	return _3D::punto(p.x, p.y, p.z);
+_2D::Punto<T> conversionParalela(const _3D::Punto<T>& desde,const _3D::Punto<T>& hacia,const _3D::Punto<T>& arriba,const _3D::Punto<T>& p){
+	_3D::Punto<T> t= _3D::puntoDeVista(desde,hacia,arriba,p);
+	return _2D::Punto<T>(t.x,t.y);
 }
 
 template<class T>
-_2D::linea<T> conversionParalela(_3D::punto desde, _3D::punto hacia, _3D::punto arriba, _3D::linea l){
-	return _2D::linea<T>(conversionParalela<T>(desde, hacia, arriba, l.inicio), conversionParalela<T>(desde, hacia, arriba, l.fin));
+_3D::Punto<T> conversionParalela(const _4D::punto& desde,const  _4D::punto& hacia,const _4D::punto& arriba,const _4D::punto& sobre,const _4D::punto&  p){
+	_4D::punto x = _4D::puntoDeVista( desde,  hacia,  arriba,  sobre, p);
+	return _3D::Punto<T>(x.x, x.y, x.z);
 }
 
-_3D::linea conversionParalela(_4D::punto desde, _4D::punto hacia, _4D::punto arriba, _4D::punto sobre, _4D::linea l){
-	return _3D::linea(conversionParalela(desde,hacia,arriba,sobre,l.inicio), conversionParalela(desde,hacia,arriba,sobre,l.fin));
+template<class T>
+_2D::Linea<T> conversionParalela(const _3D::Punto<T>& desde,const _3D::Punto<T>& hacia, const _3D::Punto<T>& arriba, const _3D::Linea<T>& l){
+	return _2D::Linea<T>(conversionParalela<T>(desde, hacia, arriba, l.inicio), conversionParalela<T>(desde, hacia, arriba, l.fin));
+}
+
+template<class T>
+_3D::Linea<T> conversionParalela(const _4D::punto& desde,const _4D::punto& hacia, const _4D::punto arriba, _4D::punto sobre, _4D::linea l){
+	return _3D::Linea<T>(conversionParalela<T>(desde,hacia,arriba,sobre,l.inicio), conversionParalela<T>(desde,hacia,arriba,sobre,l.fin));
 }
 
 #endif

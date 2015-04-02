@@ -5,23 +5,36 @@
 #include <iostream>
 #include <cmath>
 
-class color{
+class Color{
 	public:
 		unsigned char r;
 		unsigned char g;
 		unsigned char b;
 		
-		color(){
+		Color(){
 			r=g=b=0;
 		}
 		
-		color(char x, char y, char z){
+		Color(unsigned char x,unsigned char y,unsigned char z){
 			r=x;
 			g=y;
 			b=z;
 		}
 
-		color operator+(color o){
+		Color(const Color& o){
+			r = o.r;
+			g = o.g;
+			b = o.b;
+		}
+
+		Color operator=(const Color& o){
+			r = o.r;
+			g = o.g;
+			b = o.b;
+			return o;
+		}
+
+		Color operator+(const Color& o)const {
 			int rn = r+o.r;
 			int gn = g+o.g;
 			int bn = b+o.b;
@@ -31,10 +44,10 @@ class color{
 				gn=255;
 			if(bn > 255)
 				bn=255;
-			return color(rn, gn, bn);
+			return Color(rn, gn, bn);
 		}
 
-		color operator-(color o){
+		Color operator-(const Color& o)const {
 			int rn = r-o.r;
 			int gn = g-o.g;
 			int bn = b-o.b;
@@ -44,18 +57,18 @@ class color{
 				gn=0;
 			if(bn < 0)
 				bn=0;
-			return color(rn, gn, bn);
+			return Color(rn, gn, bn);
 		}
 		
-		inline bool operator==(color o){
+		inline bool operator==(const Color& o)const {
 			return r==o.r and g==o.g and b==o.b;
 		}
 
-		inline bool operator!=(color o){
+		inline bool operator!=(const Color& o)const {
 			return r!=o.r and g!=o.g and b!=o.b;
 		}
 
-		color operator*(double s){
+		Color operator*(double s)const {
 			int rn = s*r;
 			int gn = s*g;
 			int bn = s*b;
@@ -71,24 +84,24 @@ class color{
 				gn=255;
 			if(bn > 255)
 				bn=255;
-			return color(rn,gn,bn);
+			return Color(rn,gn,bn);
 		}
 
-		color aGris(){
+		Color aGris()const{
 			unsigned char c;
 			c=(unsigned char)(0.30*r + 0.59*g + 0.11*b);
-			return color(c,c,c);
+			return Color(c,c,c);
 		}
 
 
-		unsigned char luz(){
+		unsigned char luz()const{
 			return (unsigned char)(0.30*r + 0.59*g + 0.11*b);
 		}
 	
-		static color hsl(int ang){
+		static Color hsl(int ang){
 			int r, g, b;
-			ang%=360;
-			switch((ang)/60%6){
+			ang=(ang+360)%360;
+			switch(ang/60){
 				case 0:
 					r=(int)floor(255);
 					g=int(floor(255*double(ang%60)/60.0));
@@ -119,43 +132,43 @@ class color{
 					g=0;
 					b=(int)floor((255-int(floor(255*double(ang%60)/60.0))));
 			}
-			return color(r, g, b);
+			return Color(r, g, b);
 		}
 
-		static color gris(int n){
+		static Color gris(int n){
 			if(n<=0)
-				return color::negro;
+				return Color::negro;
 			if(n>=255)
-				return color::blanco;
-			return color(n, n, n);
+				return Color::blanco;
+			return Color(n, n, n);
 		}
 
-		static color azul;
-		static color rojo;
-		static color blanco;
-		static color verde;
-		static color amarillo;
-		static color morado;
-		static color naranja;
-		static color negro;
-		static color cyan;
-		static color cafe;
-		static color rosa;
+		static const Color azul;
+		static const Color rojo;
+		static const Color blanco;
+		static const Color verde;
+		static const Color amarillo;
+		static const Color morado;
+		static const Color naranja;
+		static const Color negro;
+		static const Color cyan;
+		static const Color cafe;
+		static const Color rosa;
 };
 
-color color::azul=color(0,0,255);
-color color::rojo=color(255,0,0);
-color color::blanco=color(255,255,255);
-color color::verde=color(0,255,0);
-color color::amarillo=color(255,255,0);
-color color::morado=color(255,0,255);
-color color::cyan=color(0,255,255);
-color color::naranja=color(255,128,0);
-color color::negro=color(0,0,0);
-color color::cafe=color(153,76,0);
-color color::rosa=color(255,153,204);
+const Color Color::azul=Color(0,0,255);
+const Color Color::rojo=Color(255,0,0);
+const Color Color::blanco=Color(255,255,255);
+const Color Color::verde=Color(0,255,0);
+const Color Color::amarillo=Color(255,255,0);
+const Color Color::morado=Color(255,0,255);
+const Color Color::cyan=Color(0,255,255);
+const Color Color::naranja=Color(255,128,0);
+const Color Color::negro=Color(0,0,0);
+const Color Color::cafe=Color(153,76,0);
+const Color Color::rosa=Color(255,153,204);
 
-std::istream& operator>>(std::istream& s, color& c){
+std::istream& operator>>(std::istream& s, Color& c){
 	if(s==std::cin){
 		int r,g,b;
 		std::cin>>r;
@@ -175,7 +188,7 @@ std::istream& operator>>(std::istream& s, color& c){
 
 
 
-std::ostream& operator<<(std::ostream& s, color c){
+std::ostream& operator<<(std::ostream& s,const Color& c){
 	if(s==std::cout){
 		std::cout<<"("<<(int)c.r<<","<<(int)c.g<<","<<(int)c.b<<")";
 	}else{
@@ -185,23 +198,23 @@ std::ostream& operator<<(std::ostream& s, color c){
 	}
 }
 
-color max(color a, color b){
-	color c;
+Color max(const Color& a,const Color& b){
+	Color c;
 	c.r=(a.r>b.r?a.r:b.r);
 	c.g=(a.g>b.g?a.r:b.g);
 	c.b=(a.r>b.b?a.b:b.b);
 	return c;
 }
 
-color min(color a, color b){
-	color c;
+Color min(const Color& a,const Color& b){
+	Color c;
 	c.r=(a.r<b.r?a.r:b.r);
 	c.g=(a.g<b.g?a.r:b.g);
 	c.b=(a.r<b.b?a.b:b.b);
 	return c;	
 }
 
-color maxDif(color a, color b){
+Color maxDif(const Color& a,const Color& b){
 	return max(a,b)-min(a,b);
 }
 

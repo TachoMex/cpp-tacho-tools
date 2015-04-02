@@ -1,5 +1,3 @@
-#include<cstdio>
-
 class nodoAVL{
 	public:
 		int dato;
@@ -219,16 +217,4 @@ class AVL{
 			mostrar(raiz, 0);
 		}
 };
-
-int main(){
-	AVL T;
-	T.insertar(2);
-	T.insertar(4);
-	T.insertar(5);
-	T.insertar(6);
-	T.insertar(7);
-	T.insertar(8);
-	T.mostrar();
-	return 0;
-}
 

@@ -6,80 +6,127 @@
 
 namespace _2D{
 	template<class T>
-	class linea{
+	class Linea{
 		public:
-			punto<T> inicio;
-			punto<T> fin;
-			linea<T>();
-			linea<T>(const punto<T>& a,const punto<T>& b);
-			linea<T>(const punto<T>& ini, T r, T a);
+			Punto<T> inicio;
+			Punto<T> fin;
+			Linea<T>();
+			Linea<T>(const Punto<T>& a,const Punto<T>& b);
+			Linea<T>(const Punto<T>& ini, T r, T a);
 			T angulo() const;
-			linea<T> rotar(T ang)const ;		
+			Linea<T> rotar(T ang)const ;		
 			T longitud() const;
 			T longitud2() const;
-			linea operator*(T d) const;
-			linea operator*=(T d);
+			Linea invierte()const;
+			Linea operator*(T d) const;
+			Linea operator*=(T d);
+			Linea operator/(T d) const;
+			Linea operator/=(T d);
 			std::string toString()const{
 				return inicio.toString()+std::string("->")+fin.toString();
 			}
-		//private:
-			static T ccw(const punto<T> & a, const punto<T>& b, const punto<T>& c){
-				return productoCruz(b-a,c-a);
-			}
+			
 		public:
-			bool colisiona(const linea<T>& b)const {
+			bool colisiona(const Linea<T>& b)const {
 				return (ccw(inicio,fin,b.inicio) * ccw(inicio, fin, b.fin) < 0) and (ccw(b.inicio, b.fin, inicio)*ccw(b.inicio, b.fin, fin)<0);
 			}
 
 	};
 
-	template<class T>
-	punto<T> interseccion(const linea<T>& a,const linea<T>& b);
+	Punto<double> interseccion(const Linea<double>& a,const Linea<double>& b){
+		double A1, B1, C1, dx1, dy1;
+		dx1 = a.fin.x-a.inicio.x;
+		dy1 = a.fin.y-a.inicio.y;
+		A1 = dy1;
+		B1 = -dx1;
+		C1 = a.inicio.y*dx1-a.inicio.x*dy1;
+
+		double A2, B2, C2, dx2, dy2;
+		dx2 = b.fin.x-b.inicio.x;
+		dy2 = b.fin.y-b.inicio.y;
+		A2 = dy2;
+		B2 = -dx2;
+		C2 = b.inicio.y*dx2-b.inicio.x*dy2;
+
+		//A1x + B1y = -C1x
+		//A2x + B2y = -C2x
+		double Dg = A1*B2-A2*B1;
+		double Dx = -B1*C2+C1*B2;
+		double Dy = -A1*C2+C1*A2;
+		return Punto<double>(-Dx/Dg,Dy/Dg);
+	}
 	
 	template<class T>
-	linea<T>::linea():inicio(),fin(){
+	Linea<T>::Linea():inicio(),fin(){
 	}
 
 	template<class T>
-	linea<T>::linea(const punto<T>& a,const punto<T>& b){
+	Linea<T>::Linea(const Punto<T>& a,const Punto<T>& b){
 		inicio=a;
 		fin=b;
 	}
 	
 	template<class T>
-	linea<T>::linea(const punto<T>& ini, T r, T a){
+	Linea<T>::Linea(const Punto<T>& ini, T r, T a){
 		inicio=ini;
-		fin=punto<T>(ini.x+r*cos(a), ini.y+r*sin(a));
+		fin=Punto<T>(ini.x+r*cos(a), ini.y+r*sin(a));
 	}
 
 	template<class T>
-	T linea<T>::angulo()const {
+	T Linea<T>::angulo()const {
 		return (fin - inicio).angulo();
 	}
 
 	template<class T>
-	linea<T> linea<T>::rotar(T ang)const {
-		return linea(inicio, longitud(), angulo()+ang); 
+	Linea<T> Linea<T>::rotar(T ang)const {
+		return Linea(inicio, longitud(), angulo()+ang); 
 	}
 
 
 	template<class T>
-	T linea<T>::longitud()const{
+	T Linea<T>::longitud()const{
 		return (fin-inicio).norma();
 	}
 	template<class T>
-	T linea<T>::longitud2()const{
+	T Linea<T>::longitud2()const{
 		return (fin-inicio).norma();
 	}
 
 	template<class T>
-	linea<T> linea<T>::operator*(T d)const{
-		return linea(inicio, longitud()*d, angulo());
+	Linea<T> Linea<T>::operator*(T d)const{
+		return Linea(inicio, longitud()*d, angulo());
 	}
 	template<class T>
-	linea<T> linea<T>::operator*=(T d){
+	Linea<T> Linea<T>::operator*=(T d){
 		*this=*this*d;
 		return *this;
+	}
+	template<class T>
+	Linea<T> Linea<T>::invierte()const{
+		return Linea<T>(fin,inicio);
+	}
+
+	template<class T>
+	Linea<T> Linea<T>::operator/(T d) const{
+		return Linea(inicio/d,fin/d);
+	}
+
+	template<class T>
+	Linea<T> Linea<T>::operator/=(T d){
+		*this=*this/d;
+		return *this;		
+	}
+
+	template<class T>
+	T distancia(const Linea<T>& l,const Punto<T>& p){
+		double A, B, C, dx, dy, d;
+		dx = l.fin.x-l.inicio.x;
+		dy = l.fin.y-l.inicio.y;
+		A = dy;
+		B = -dx;
+		C = l.inicio.y*dx-l.inicio.x*dy;
+		d = abs(A*p.x+B*p.y+C)/sqrt(A*A+B*B);
+		return d;
 	}
 }
 #endif

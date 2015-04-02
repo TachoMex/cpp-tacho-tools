@@ -1,14 +1,15 @@
-#include"linea.h"
+#include "linea.h"
 namespace _3D{
-	class prisma:public linea{
+	template<class T>
+	class Prisma:public Linea<T>{
 		public:
-			prisma():linea(){}
-			prisma(punto i, punto f):linea(i,f){}
-			prisma(punto a, double b, double c, double d):linea(a,b,c,d){}
-			prisma(linea l):linea(l){}
+			Prisma():Linea<T>(){}
+			Prisma(const Punto<T>& i, const Punto<T>& f):Linea<T>(i,f){}
+			Prisma(const Punto<T> a, double b, double c, double d):Linea<T>(a,b,c,d){}
+			Prisma(const Linea<T>& l):Linea<T>(l){}
 			
-			punto centro()const{
-				return inicio+(fin-inicio)*0.5;
+			Punto<T> centro()const{
+				return this->inicio+(this->fin-this->inicio)*0.5;
 			}
 	};
 }

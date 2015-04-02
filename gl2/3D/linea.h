@@ -1,28 +1,29 @@
 #ifndef LINEA3D_H
 #define LINEA3D_H
 
-#include"punto.h"
+#include "punto.h"
 
 namespace _3D{
-	class linea{
+	template<class T>
+	class Linea{
 		public:
-			punto inicio, fin;
+			Punto<T> inicio, fin;
 			
-			linea():inicio(),fin(){}
+			Linea():inicio(),fin(){}
 			
-			linea(punto i, punto f){
+			Linea(const Punto<T>& i,const Punto<T>& f){
 				inicio=i;
 				fin=f;
 			}
 			
-			linea(const linea& l){
+			Linea(const Linea<T>& l){
 				inicio=l.inicio;
 				fin=l.fin;
 			}
 	
-			linea(const punto& i, double hx, double hy, double hz){
+			Linea(const Punto<T>& i, double hx, double hy, double hz){
 				inicio=i;
-				fin=i+punto(hx, hy, hz);
+				fin=i+Punto<T>(hx, hy, hz);
 			}
 			
 			double longitud()const{
@@ -33,8 +34,8 @@ namespace _3D{
 				return inicio.toString()+std::string("->")+fin.toString();
 			}
 			
-			linea operator*(double k)const{
-				return linea(inicio,inicio+(fin-inicio)*k); 
+			Linea operator*(double k)const{
+				return Linea<T>(inicio,inicio+(fin-inicio)*k); 
 			}
 	};
 }

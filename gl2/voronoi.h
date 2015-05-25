@@ -8,7 +8,6 @@ class VoronoiNoGeometrico{
 private:
 	std::vector<_2D::Punto<T>> puntos;
 	int x, y;
-	int n, m;
 	Imagen grafica;
 	T (*func)(const _2D::Punto<T>&,const _2D::Punto<T>&);
 public:
@@ -17,8 +16,7 @@ public:
 	VoronoiNoGeometrico(int x, int y,const std::vector<_2D::Punto<T>>& v, T (*f_dist)(const _2D::Punto<T>&,const _2D::Punto<T>&)){
 		this->x = x;
 		this->y = y;
-		grafica = obtenerImagen();		
-		puntos = v;
+		this->puntos = v;
 		this->func = f_dist;
 	}
 
@@ -26,7 +24,7 @@ public:
 		Imagen I(x,y);		
 		for(int i=0;i<y;i++){
 			for(int j=0;j<x;j++){
-				T dist_min = x*y*x*y;
+				T dist_min = func(_2D::Punto<T>(),_2D::Punto<T>(x,y));;
 				int id = 0;
 				_2D::Punto<T> actual(j,i);
 				for(int k=0;k<puntos.size();k++){
@@ -37,16 +35,20 @@ public:
 					}
 				}
 				try{
-					I.en((int)actual.y,(int)actual.x)  =Color::hsl(113*id);
+					I.en((int)actual.y,(int)actual.x)  =Color::hsl(113*id+113*4);
 				}catch(...){
-
-				}
+				}	
 					
 			}
 		}
 
 		for(auto p:puntos){
-			I.en((int)p.y,(int)p.x) = Color::rojo;
+			try{
+				I.en((int)p.y,(int)p.x) = Color::rojo;
+			}catch(...){
+
+			}
+
 		}
 
 		return I-I.laplace().umbral(1,Color::negro, Color::blanco);

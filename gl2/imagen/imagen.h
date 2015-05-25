@@ -4,6 +4,7 @@
 #include <cstring>
 #include "color.h"
 #include <algorithm>
+#include "jpgutil.h"
 class Imagen{
 	private:
 		Color*pixels;

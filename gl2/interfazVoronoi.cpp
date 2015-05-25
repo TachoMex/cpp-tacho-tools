@@ -129,7 +129,7 @@ void eventoTeclado(unsigned char k, int x, int y){
 
 int main(int argc, char** argv){ 
 	srand(time(NULL));
-	vs = interfaz(SCREEN_X,SCREEN_Y,15,15);
+	vs = interfaz(SCREEN_X,SCREEN_Y,5,5);
 	glutInit(&argc,argv); 
 	glutInitDisplayMode(GLUT_DOUBLE); 
 	glutInitWindowSize(SCREEN_X,SCREEN_Y); 

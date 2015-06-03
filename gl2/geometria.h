@@ -5,8 +5,10 @@
 #include "3D/punto.h"
 #include "3D/prisma.h"
 #include "3D/angulo.h"
+#include "3D/angulo.h"
 
 #include "2D/linea.h"
+#include "2D/poligono.h"
 #include "2D/punto.h"
 #include "2D/triangulo.h"
 #include "2D/rectangulo.h"

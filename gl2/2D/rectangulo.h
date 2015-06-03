@@ -31,5 +31,21 @@
 					return Rectangulo<T>(a, b);
 			}
 	};
+
+	template<class T>
+	class RectanguloGirado: public Rectangulo<T>{
+	public:
+		T angulo;
+		RectanguloGirado():Rectangulo<T>(){
+
+		}
+		RectanguloGirado(const Rectangulo<T>& r, T a):Rectangulo<T>(r){
+			angulo = a;
+		}
+		RectanguloGirado(const Rectangulo<T>& r):Rectangulo<T>(r){
+			angulo=0;
+		}
+	};
+
 }
 #endif

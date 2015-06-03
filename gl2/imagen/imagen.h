@@ -5,6 +5,8 @@
 #include "color.h"
 #include <algorithm>
 #include "jpgutil.h"
+#include <queue>
+
 class Imagen{
 	private:
 		Color*pixels;
@@ -274,6 +276,459 @@ class Imagen{
      		return filtroMatriz(coeficientes);
 		}
 
+	//private:
+		static int max_bit(int n){
+			if(n==0)
+				return 0;
+			int i=1;
+			int k=0;
+			while(n){
+				if(n&i)
+					n^=i;
+				i<<=1;
+				k++;
+			}
+			return k;
+		}
+
+		static void rcl(int*zigzag, vector<int>& cadena, vector<int>& coeficientes, const Matrix8x8& M){
+			int i=1;
+			int cont_z = 0;
+			while(i<64){
+				if(zigzag[i]!=0){
+					if(cont_z>15){
+						cadena.push_back(0xf0);
+						cont_z-=16;
+						continue;
+					}else{
+						if(cont_z*16+max_bit(abs(zigzag[i]))>255){
+							cout<<M<<endl;
+							cout<<Matrix8x8::DCTMatrix*M*(Matrix8x8::DCTMatrix.traspuesta())<<endl;
+							cout<<cuantificar(Matrix8x8::DCTMatrix*M*(Matrix8x8::DCTMatrix.traspuesta()),Matrix8x8::HQMatrix)<<endl;
+
+						}
+						cadena.push_back(cont_z*16+max_bit(abs(zigzag[i])));
+						coeficientes.push_back(zigzag[i]);
+						cont_z=0;
+					}
+				}else{
+					cont_z++;
+				}
+				i++;
+			}
+			if(cont_z){
+				cadena.push_back(0);
+			}
+		}
+
+		void escribe_tabla(std::ofstream& f, vector<int> tabla[], int identificador){
+			if(tabla[0].size()){
+				tabla[1].push_back(tabla[0][0]);	
+			}
+			int longitud=18;
+			for(int i=1;i<=16;i++){
+				longitud+=tabla[i].size();
+			}
+			f.put(0xff); f.put(0xc4);
+			f.put(longitud/256); f.put(longitud%256);
+			f.put(identificador);
+			for(int i=1;i<=16;i++){
+				f.put(tabla[i].size());
+			}
+			for(int i=1;i<=16;i++){
+				for(int j=0;j<tabla[i].size();j++){
+					f.put(tabla[i][j]);
+				}
+			}
+		}
+
+		NodoHuffman<int>* construye_arbol(vector<int> tabla[]){
+			if(tabla[0].size()){
+				NodoHuffman<int>* arbol = new NodoHuffman<int>();
+				arbol->izq=new NodoHuffman<int>();
+				arbol->der=new NodoHuffman<int>();
+				arbol->izq->letra = tabla[0][0];
+				arbol->der->letra = tabla[0][0]+1;
+				return arbol;
+			}
+			queue<NodoHuffman<int>*> cola; 
+			NodoHuffman<int>* arbol = new NodoHuffman<int>();
+			arbol->letra=123123;
+			arbol->repeticiones=0;
+			arbol->izq = new NodoHuffman<int>();
+			arbol->der = new NodoHuffman<int>();
+			arbol->izq->repeticiones = 1;
+			arbol->izq->letra = 4200;
+			arbol->der->repeticiones = 1;
+			arbol->der->letra = 4200;
+			cola.push(arbol->izq);
+			cola.push(arbol->der);
+			for(int i=1;i<=16;i++){
+				for(int codigo:tabla[i]){
+					NodoHuffman<int>* aux = cola.front();
+					cola.pop();
+					aux->letra = codigo;
+				}
+				if(i!=16)
+				while(not cola.empty() and cola.front()->repeticiones==i){
+					NodoHuffman<int>* aux = cola.front();
+					cola.pop();
+					aux->izq = new NodoHuffman<int>();
+					aux->der = new NodoHuffman<int>();
+					aux->izq->repeticiones = aux->repeticiones+1;
+					aux->der->repeticiones = aux->repeticiones+1;
+					cola.push(aux->izq);
+					cola.push(aux->der);
+				}
+			}
+
+			return arbol;
+		}
+
+		void escribe_minbyte(int categoria, int dato, vector<bool>& flujobytes){
+			if(dato<0)
+				dato=~dato;
+			for(int k=categoria-1;k>=0;k--){
+				flujobytes.push_back(dato>>k&1);
+			}
+		}
+
+		void escribe_ac(vector<int>& cadena,vector<bool>& flujo,map<int,vector<bool>>& diccionario, vector<int>& coeficientes){
+			bool EOB = false;
+			for(int i=0;i<63 and not EOB;i++){
+				flujo.insert(flujo.end(),diccionario[cadena[0]].begin(), diccionario[cadena[0]].end());
+				int categoria = cadena[0]%16; 
+				EOB = cadena[0]==0;
+				cadena.erase(cadena.begin());
+				if(categoria!=0){	
+					int dato = coeficientes[0];
+					coeficientes.erase(coeficientes.begin());
+					escribe_minbyte(categoria,dato, flujo);
+				}
+			}
+		}
+
+		void escribe_dc(vector<int>& cadena,vector<bool>& flujo,map<int,vector<bool>>& diccionario, vector<int>& coeficientes){
+			flujo.insert(flujo.end(),diccionario[cadena[0]].begin(), diccionario[cadena[0]].end());
+			int categoria = cadena[0]%16; 
+			cadena.erase(cadena.begin());
+			if(categoria!=0){	
+				int dato = coeficientes[0];
+				escribe_minbyte(categoria,dato, flujo);
+			}
+			coeficientes.erase(coeficientes.begin());
+		}
+
+	public:
+
+
+
+		void guardaJPG(const char*nombre){
+			std::ofstream f(nombre);
+			
+			//cabeceras
+			f.put(0xff); f.put(0xd8); f.put(0xff); f.put(0xe0);
+			f.put(0x00); f.put(0x10); f.put(0x4a); f.put(0x46);
+			f.put(0x49); f.put(0x46); f.put(0x00); f.put(0x01);
+			f.put(0x01); f.put(0x00); f.put(0x00); f.put(0x01);
+			f.put(0x00); f.put(0x01); f.put(0x00); f.put(0x00);
+			//Inicia escritura de las tablas de cuantificacion
+			f.put(0xff); f.put(0xdb);
+			f.put(0x00); f.put(0x84); //longitud
+			f.put(0x00); 			  //Luminancia
+			int* matriz = Matrix8x8::HQMatrix.zigzag();
+			for(int i=0;i<64;i++){
+				f.put(matriz[i]);
+			}
+			f.put(0x01); 			  //Crominancia
+			for(int i=0;i<64;i++){
+				f.put(matriz[i]);
+			}
+			delete[] matriz;		
+
+			f.put(0xff); f.put(0xc0); 
+			f.put(0x00); f.put(0x11); 
+			f.put(0x08); f.put(y/256);
+			f.put(y%256); f.put(x/256); 
+			f.put(x%256); f.put(0x03); 
+			f.put(0x01); f.put(0x11); 
+			f.put(0x00); f.put(0x02); 
+			f.put(0x11); f.put(0x01); 
+			f.put(0x03); f.put(0x11); 
+			f.put(0x01);
+
+			//Calcular la cantidad de chunks
+			int chunks_y = columnas()/8;
+			int chunks_x = filas()/8;
+			int cantidad_chunks = chunks_x*chunks_y;
+
+			//Se crean varios arreglos para las cadenas que seran reducidas con huffman
+			vector<int> cadena_YAC;
+			vector<int> coeficientes_YDC;
+			vector<int> cadena_YDC;
+			vector<int> coeficientesY;
+			vector<int> cadena_CAC;
+			vector<int> cadena_CDC;
+			vector<int> coeficientesC;
+			vector<int> coeficientesDCr;
+			vector<int> coeficientesDCb;
+
+			for(int i=0;i<chunks_x;i++){
+				for(int j=0;j<chunks_y;j++){
+
+					//Se calculan 3 matrices para cada uno de los canales de color
+					Matrix8x8 Y, Cb, Cr;
+					for(int x=0;x<8;x++){
+						for(int y=0;y<8;y++){
+							//Se obtiene el pixel actual de la matriz y se convierte de RGB a YCbCr
+							YcbcrColor pix = en(i*8+x,j*8+y);
+							Y[x][y] = pix.y;
+							Cb[x][y] = pix.cb;
+							Cr[x][y] = pix.cr;
+						}
+					}
+
+					Matrix8x8 Y2=Y, Cb2=Cb, Cr2=Cr;
+
+				//	cout<<Cr2<<endl;
+
+					//Se calcula la DCT de cada una de las matrices y se cuantifica, por ahora con la matriz de alta calidad
+					Y = cuantificar(Matrix8x8::DCTMatrix*Y*(Matrix8x8::DCTMatrix.traspuesta()),Matrix8x8::HQMatrix);
+					Cb = cuantificar(Matrix8x8::DCTMatrix*Cb*(Matrix8x8::DCTMatrix.traspuesta()),Matrix8x8::HQMatrix);
+					Cr = cuantificar(Matrix8x8::DCTMatrix*Cr*(Matrix8x8::DCTMatrix.traspuesta()),Matrix8x8::HQMatrix);
+
+					//Se obtienen los coeficientes de las matrices en zigzag
+					int *zigzagY = Y.zigzag();
+					int *zigzagCb = Cb.zigzag();
+					int *zigzagCr = Cr.zigzag();
+
+/*
+	//Despues se corre un RLC en cada uno de los coeficientes. para cada valor, se guarda como un par (z,d)
+	//donde z es la cantidad de ceros que anteceden al dato y d es la cantidad minima de bits que se requieren para codificar al dato 
+	//Se usa el siguiente sistema:
+	//Ambos datos se guardan en un byte, por lo que no puede haber coeficientes mayores a 15
+	//(15,0) representa un bloque de 16 ceros consecutivos. 
+	*				Values             Category        Bits for the value
+	*					0            	        0                   -
+	*			      -1,1                  	1                  0,1
+	*			   -3,-2,2,3   		            2              00,01,10,11
+	*		  	   -7,-6,-5,-4,4,5,6,7          3    000,001,010,011,100,101,110,111
+	*		       -15,..,-8,8,..,15            4       0000,..,0111,1000,..,1111
+	*		      -31,..,-16,16,..,31           5     00000,..,01111,10000,..,11111
+	*		      -63,..,-32,32,..,63           6                   .
+	*		     -127,..,-64,64,..,127          7                   .
+	*		    -255,..,-128,128,..,255         8                   .
+	*		    -511,..,-256,256,..,511         9                   .
+	*		   -1023,..,-512,512,..,1023       10                   .
+	*		  -2047,..,-1024,1024,..,2047      11                   .
+	*		  -4095,..,-2048,2048,..,4095      12                   .
+	*		  -8191,..,-4096,4096,..,8191      13                   .
+	*		 -16383,..,-8192,8192,..,16383     14                   .
+	*		-32767,..,-16384,16384,..,32767    15                   .
+*/
+					rcl(zigzagY, cadena_YAC, coeficientesY, Y2);
+					rcl(zigzagCb, cadena_CAC, coeficientesC, Cb2);
+					rcl(zigzagCr, cadena_CAC, coeficientesC, Cr2);
+					coeficientes_YDC.push_back(zigzagY[0]);
+					coeficientesDCb.push_back(zigzagCb[0]);
+					coeficientesDCr.push_back(zigzagCr[0]);
+					//se liberan los datos
+					delete[] zigzagY;
+					delete[] zigzagCr;
+					delete[] zigzagCb;
+				}
+			}	
+
+			for(int i=coeficientes_YDC.size()-1;i>0;i--){
+				coeficientes_YDC[i]-=coeficientes_YDC[i-1];
+				coeficientesDCr[i]-=coeficientesDCr[i-1];
+				coeficientesDCb[i]-=coeficientesDCb[i-1];
+			}
+
+
+			for(int i=0;i<coeficientes_YDC.size();i++){
+				cout<<coeficientes_YDC[i]<<" ";
+			}
+			cout<<endl;
+			/*
+			for(int i=0;i<coeficientesDCb.size();i++){
+				cout<<coeficientesDCb[i]<<" ";
+			}
+			cout<<endl;
+
+			for(int i=0;i<coeficientesDCr.size();i++){
+				cout<<coeficientesDCr[i]<<" ";
+			}
+			cout<<endl;*/
+			//Los coeficientes de DC se calculan con diferencias
+			for(int i=0;i<coeficientes_YDC.size();i++){
+				cadena_YDC.push_back(max_bit(abs(coeficientes_YDC[i])));
+				cadena_CDC.push_back(max_bit(abs(coeficientesDCb[i])));
+				cadena_CDC.push_back(max_bit(abs(coeficientesDCr[i])));
+			}
+
+			cout<<"YDC:"<<endl;
+			for(int i: cadena_YDC){
+				cout<<i<<" ";
+			}
+			cout<<endl;
+
+			cout<<"CDC:"<<endl;
+			for(int i: cadena_CDC){
+				cout<<i<<" ";
+			}
+			cout<<endl;
+
+
+			NodoHuffman<int> * arbolYAC = codifica<int,std::vector<int>::iterator>(cadena_YAC.begin(), cadena_YAC.end());
+			NodoHuffman<int> * arbolYDC = codifica<int,std::vector<int>::iterator>(cadena_YDC.begin(), cadena_YDC.end());
+			NodoHuffman<int> * arbolCAC = codifica<int,std::vector<int>::iterator>(cadena_CAC.begin(), cadena_CAC.end());
+			NodoHuffman<int> * arbolCDC = codifica<int,std::vector<int>::iterator>(cadena_CDC.begin(), cadena_CDC.end());
+			vector<int> tabla_YAC[30];
+			vector<int> tabla_YDC[30];
+			vector<int> tabla_CAC[30];
+			vector<int> tabla_CDC[30];
+			construye_tabla(0,tabla_YAC,arbolYAC);
+			construye_tabla(0,tabla_CAC,arbolCAC);
+			construye_tabla(0,tabla_CDC,arbolCDC);
+			construye_tabla(0,tabla_YDC,arbolYDC);
+			escribe_tabla(f,tabla_YAC,0x10);
+			escribe_tabla(f,tabla_YDC,0x00);
+			escribe_tabla(f,tabla_CAC,0x11);
+			escribe_tabla(f,tabla_CDC,0x01);
+			borrar(arbolYAC); arbolYAC = ArbolVacio;
+			borrar(arbolYDC); arbolYDC = ArbolVacio;
+			borrar(arbolCDC); arbolCDC = ArbolVacio;
+			borrar(arbolCAC); arbolCAC = ArbolVacio;
+
+			map<int,vector<bool>> diccionarioYAC;
+			map<int,vector<bool>> diccionarioYDC;
+			map<int,vector<bool>> diccionarioCAC;
+			map<int,vector<bool>> diccionarioCDC;
+			
+
+			vector<bool> aux;//vector auxiliar para la construccion de las tablas;
+
+			//Se reconstruyen los arboles de modo que sea decodificado igual
+			arbolYAC = construye_arbol(tabla_YAC);
+			arbolYDC = construye_arbol(tabla_YDC);
+			arbolCAC = construye_arbol(tabla_CAC);
+			arbolCDC = construye_arbol(tabla_CDC);
+
+
+			construye_diccionario(aux,diccionarioYAC, arbolYAC);
+			construye_diccionario(aux,diccionarioYDC, arbolYDC);
+			construye_diccionario(aux,diccionarioCAC, arbolCAC);
+			construye_diccionario(aux,diccionarioCDC, arbolCDC);
+			//muestraHuffman(arbolCDC);
+			/*cout<<endl;
+			for(std::map<int, vector<bool>>::iterator i=diccionarioCDC.begin();i!=diccionarioCDC.end();i++){
+				cout<<hex<<i->first<<":\t";
+				for(bool j:i->second){
+					cout<<j;
+				}
+				cout<<endl;
+			}*/
+
+			
+
+			f.put(0xff); f.put(0xda); 
+			f.put(0x00); f.put(0x0c);
+			f.put(0x03); f.put(0x01);
+			f.put(0x00); f.put(0x02);
+			f.put(0x11); f.put(0x03);
+			f.put(0x11); f.put(0x00);
+			f.put(0x3f); f.put(0x00);
+
+			vector<bool> flujobytes;
+
+			/*
+				vector<int> cadena_YAC;
+				vector<int> coeficientes_YDC;
+				vector<int> cadena_YDC;
+				vector<int> coeficientesY;
+				vector<int> cadena_CAC;
+				vector<int> cadena_CDC;
+				vector<int> coeficientesC;
+				vector<int> coeficientesDCr;
+				vector<int> coeficientesDCb;
+			*/
+			// /cout<<chunks_y<<" "<<chunks_x<<endl;
+			/*		cout<<"coeficientes_YDC: "<<coeficientes_YDC.size()<<endl;
+					cout<<"cadena_YDC: "<<cadena_YDC.size()<<endl;
+					cout<<"cadena_CDC: "<<cadena_CDC.size()<<endl;
+					cout<<"coeficientesDCr: "<<coeficientesDCr.size()<<endl;
+					cout<<"coeficientesDCb: "<<coeficientesDCb.size()<<endl;
+			*/for(int i=0;i<chunks_x;i++){
+				for(int j=0;j<chunks_y;j++){
+					//Escribir DC Y
+					escribe_dc(cadena_YDC,flujobytes,diccionarioYDC, coeficientes_YDC);
+					//Escribir AC Y
+					escribe_ac(cadena_YAC,flujobytes, diccionarioYAC, coeficientesY);
+					//Escribir DC Cb
+					escribe_dc(cadena_CDC, flujobytes,diccionarioYDC, coeficientesDCb);
+					//Escribir AC Cb
+					escribe_ac(cadena_CAC,flujobytes, diccionarioCAC, coeficientesC);
+					//Escribir DC Cr
+					escribe_dc(cadena_CDC, flujobytes,diccionarioYDC, coeficientesDCr);
+					//Escribir AC Cr
+					escribe_ac(cadena_CAC,flujobytes, diccionarioCAC, coeficientesC);
+
+					//cout<<i<<" "<<j<<endl;
+					while(flujobytes.size()>=8){
+						int byte = 0;
+						int acum = 128;
+						for(int k=0;k<8;k++){
+							byte+=(int)flujobytes[k]*acum;
+							acum>>=1;
+						}
+						flujobytes.erase(flujobytes.begin(), flujobytes.begin()+8);
+						f.put(byte);
+						cout<<hex<<byte<<" ";
+						if(byte==255){
+							cout<<"00 ";
+							f.put(0);
+						}
+					}
+					f.flush();
+				}
+			}
+/*			cout<<"cadena_YAC: "<<cadena_YAC.size()<<endl;
+					cout<<"coeficientes_YDC: "<<coeficientes_YDC.size()<<endl;
+					cout<<"cadena_YDC: "<<cadena_YDC.size()<<endl;
+					cout<<"coeficientesY: "<<coeficientesY.size()<<endl;
+					cout<<"cadena_CAC: "<<cadena_CAC.size()<<endl;
+					cout<<"cadena_CDC: "<<cadena_CDC.size()<<endl;
+					cout<<"coeficientesC: "<<coeficientesC.size()<<endl;
+					cout<<"coeficientesDCr: "<<coeficientesDCr.size()<<endl;
+					cout<<"coeficientesDCb: "<<coeficientesDCb.size()<<endl;
+*/			while(flujobytes.size()%8){
+				flujobytes.push_back(0);
+			}
+			while(flujobytes.size()>=8){
+						int byte = 0;
+						int acum = 128;
+						for(int k=0;k<8;k++){
+							byte+=(int)flujobytes[k]*acum;
+							acum>>=1;
+						}
+						flujobytes.erase(flujobytes.begin(), flujobytes.begin()+8);
+						f.put(byte);
+						cout<<hex<<byte<<" ";
+						if(byte==255){
+							cout<<"00 ";
+							f.put(0);
+						}
+					}
+			f.put(0xff); f.put(0xd9); 
+			f.close();
+			borrar(arbolYAC); arbolYAC = ArbolVacio;
+			borrar(arbolYDC); arbolYDC = ArbolVacio;
+			borrar(arbolCDC); arbolCDC = ArbolVacio;
+			borrar(arbolCAC); arbolCAC = ArbolVacio;
+
+		}
+
 		void guardaBMP(const char *nombre){
 			std::ofstream f(nombre);
 			f.put('B'); f.put('M'); //Tipo
@@ -454,72 +909,5 @@ class Imagen{
 
 
 
-void dibujaLinea(Imagen &M, int y1,int  x1,int y2, int x2,const Color& c){
-		int dx=abs(x2-x1);
-		int dy=abs(y2-y1);
-		if(dy==0){
-			if(x2<x1)
-			std::swap(x1,x2);
-			for(;x1<=x2;x1++)
-			try{M(x1,y1)=c;}catch(int n){}
-		}else if(dx==0){
-			if(y1>y2)
-			std::swap(y1,y2);
-			for(;y1<=y2;y1++)
-			try{M(x1,y1)=c;}catch(int n){}
-			
-		}else if(dx==dy){
-			if(x1>x2){
-				std::swap(x1,x2);
-				std::swap(y1, y2);
-			}
-			int incremento=(y1<y2?1:-1);
-			for(;x1<=x2;x1++,y1+=incremento){
-				try{M(x1,y1)=c;}catch(int n){}
-			}
-		}
-		else if(dy<dx){
-			if(x1>x2){
-				std::swap(x1,x2);
-				std::swap(y1, y2);
-			}
-			int x=x1, y=y1;
-			int incremento=(y1<y2?1:-1);
-			int p=0;
-			p=2*dy-dx;
-			while(x!=x2 or y!=y2){
-				try{M(x,y)=c;}catch(int n){}
-				if(p>=0){
-					x++;
-					y+=incremento;
-					p=p+2*dy-2*dx;
-				}else{
-					x++;
-					p=p+2*dy;
-				}
-			}
-		}else{	
-			if(y1>y2){
-				std::swap(x1,x2);
-				std::swap(y1, y2);
-			}
-			int y=y1, x=x1;
-			int incremento=(x1<x2?1:-1);
-			int p=0;
-			p=2*dx-dy;
-			while(y!=y2 or x!=x2){
-				try{M(x,y)=c;}catch(int n){}
-				if(p>0){
-					y++;
-					x+=incremento;
-					p=p+2*dx-2*dy;
-				}else{
-					y++;
-					p=p+2*dx;
-				}
-			}
-		}
-		try{M(x2,y2)=c;}catch(int n){}
-	}
 
 #endif

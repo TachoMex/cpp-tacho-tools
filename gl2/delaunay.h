@@ -95,7 +95,25 @@ public:
 		calculaLineas();
 	}
 
+	//Retorna un grafo que 
+	std::vector<std::vector<bool>> grafoDeTriangulos(){
+		std::vector<std::vector<bool>> grafo(puntos.size(),vector<bool>(puntos.size()));
+		for(auto t: triangulitos){
+			grafo[t.x][t.y] = true;
+			grafo[t.x][t.z] = true;
 
+			grafo[t.y][t.x] = true;
+			grafo[t.y][t.z] = true;
+
+			grafo[t.z][t.x] = true;
+			grafo[t.z][t.y] = true;
+		}
+		return grafo;
+	}
+
+	int cantidadPuntos(){
+		return puntos.size();
+	}
 
 };
 

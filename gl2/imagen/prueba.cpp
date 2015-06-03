@@ -6,24 +6,15 @@ using namespace std;
 
 
 int main(){
-	Matrix8x8 a,I;
-	int datos[]={
-		51,51,50,51,51,50,51,50,52,52,50,50,50,51,52,51,51,51,51,50,50,52,51,52,50,51,52,50,51,52,50,52,50,50,52,52,50,51,52,50,52,52,51,50,50,50,50,51,50,52,51,50,51,50,52,52,52,51,51,51,50,50,50,51 
-	};
-	int datos2[]={
-		-76,-73,-67,-62,-58,-67,-64,-55,-65,-69,-73,-38,-19,-43,-59,-56,-66,-69,-60,-15,16,-24,-62,-55,-65,-70,-57,-6,26,-22,-58,-59,-61,-67,-60,-24,-2,-40,-60,-58,-49,-63,-68,-58,-51,-60,-70,-53,-43,-57,-64,-69,-73,-67,-63,-45,-41,-49,-59,-60,-63,-52,-50,-34
-	};
+	Imagen I(16,8);
 	for(int i=0;i<8;i++){
-		for(int j=0;j<8;j++){
-			a[i][j]=datos2[i*8+j];
+		for(int j=0;j<16;j++){
+			I.en(i,j)=(j>=8?Color::blanco:Color::negro);
 		}
 	}
-	for (int i = 0; i < 8; ++i){
-		I[i][i]=1;
-	}
-	cout<<a<<endl;
-	Matrix8x8 B=Matrix8x8::DCTMatrix*a*(Matrix8x8::DCTMatrix.traspuesta());
-	Matrix8x8 Q = cuantificar(B,Matrix8x8::Losheller);
-	cout<<Q<<endl;
+	I.guardaBMP("test.bmp");
+	I.leeBMP("test.bmp");
+	I.guardaJPG("test.jpg");
+
 	return 0;
 }

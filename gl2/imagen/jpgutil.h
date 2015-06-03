@@ -1,4 +1,5 @@
 #include "color.h"
+#include "huffman.h"
 
 class YcbcrColor{
 	public:
@@ -15,9 +16,9 @@ class YcbcrColor{
 		r=u.r;
 		g=u.g;
 		b=u.b;
-		y = 0.299*r+0.587*g+0.114*b;
-		cb = -0.1687*r-0.3313*g+0.5*b+128;
-		cr = 0.5*r-0.4187*g-0.0813*b+128;
+		y = 0.299*r+0.587*g+0.114*b-128;
+		cb = -0.1687*r-0.3313*g+0.5*b;
+		cr = 0.5*r-0.4187*g-0.0813*b;
 	}
 };
 
@@ -29,6 +30,7 @@ public:
 		datos = new float[64];
 		memset(datos,0,sizeof(datos));
 	}
+
 	const float* operator[](int i) const{
 		return datos+8*i;
 	}
@@ -90,7 +92,43 @@ public:
 		return b;
 	}
 
+	int* zigzag() const{
+		int * res = new int[64];
+		
+		int pos[]={0, 1, 5, 6,14,15,27,28,
+		  2, 4, 7,13,16,26,29,42,
+		  3, 8,12,17,25,30,41,43,
+		  9,11,18,24,31,40,44,53,
+		 10,19,23,32,39,45,52,54,
+		 20,22,33,38,46,51,55,60,
+		 21,34,37,47,50,56,59,61,
+		 35,36,48,49,57,58,62,63};
+		for(int i=0;i<64;i++){
+			res[pos[i]]=(int)floor(0.5+datos[i]);
+		}
+
+		return res;
+	}
+
+	static Matrix8x8 zigzag(int* entrada){
+		Matrix8x8 res;
+		
+		int pos[]={0, 1, 5, 6,14,15,27,28,
+		  2, 4, 7,13,16,26,29,42,
+		  3, 8,12,17,25,30,41,43,
+		  9,11,18,24,31,40,44,53,
+		 10,19,23,32,39,45,52,54,
+		 20,22,33,38,46,51,55,60,
+		 21,34,37,47,50,56,59,61,
+		 35,36,48,49,57,58,62,63};
+		for(int i=0;i<64;i++){
+			res.datos[i]=entrada[pos[i]];
+		}
+		return res;	
+	}
+
 	const static Matrix8x8 Losheller; 
+	const static Matrix8x8 HQMatrix; 
 	const static Matrix8x8 DCTMatrix; 
 	friend std::ostream& operator<<(std::ostream&,const Matrix8x8&);
 };
@@ -105,6 +143,28 @@ const float LoshellerFloat[8][8] = {
 	{72,92,95,98,112,100,103,99}
 };
 const Matrix8x8 Matrix8x8::Losheller(LoshellerFloat);
+
+/*const float HQM_FLOAT[8][8]={
+{3,2,2,3,4,6,8,10 },
+{2,2,2,3,4,9,10,9 },
+{2,2,3,4,6,9,11,9 },
+{2,3,4,5,8,14,13,10 },
+{3,4,6,9,11,17,16,12 },
+{4,6,9,10,13,17,18,15 },
+{8,10,12,14,16,19,19,16 },
+{12,15,15,16,18,16,16,16 },
+};*/
+const float HQM_FLOAT[8][8]={
+	{2,   2,   2,   2,   3,   4,   5,   6}, 
+    {2,   2,   2,   2,   3,   4,   5,   6}, 
+    {2,   2,   2,   2,   4,   5,   7,   9}, 
+    {2,   2,   2,   4,   5,   7,   9,  12}, 
+    {3,   3,   4,   5,   8,  10,  12,  12}, 
+    {4,   4,   5,   7,  10,  12,  12,  12}, 
+    {5,   5,   7,   9,  12,  12,  12,  12}, 
+    {6,   6,   9,  12,  12,  12,  12,  12}, 
+};
+const Matrix8x8 Matrix8x8::HQMatrix(HQM_FLOAT);
 
 std::ostream& operator<<(std::ostream& s, const Matrix8x8& m){
 	for(int i=0;i<8;i++){

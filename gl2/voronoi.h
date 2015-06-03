@@ -20,8 +20,11 @@ public:
 		this->func = f_dist;
 	}
 
+	void agregaPunto(const _2D::Punto<T>&p){
+		puntos.push_back(p);
+	}
 	Imagen obtenerImagen(){
-		Imagen I(x,y);		
+		Imagen I(x,y);	
 		for(int i=0;i<y;i++){
 			for(int j=0;j<x;j++){
 				T dist_min = func(_2D::Punto<T>(),_2D::Punto<T>(x,y));;
@@ -44,7 +47,7 @@ public:
 
 		for(auto p:puntos){
 			try{
-				I.en((int)p.y,(int)p.x) = Color::rojo;
+				//I.en((int)p.y,(int)p.x) = Color::rojo;
 			}catch(...){
 
 			}
@@ -53,7 +56,6 @@ public:
 
 		return I-I.laplace().umbral(1,Color::negro, Color::blanco);
 	}
-	
 };
 
 template<class T>
@@ -61,20 +63,31 @@ class Voronoi{
 private:
 	//puntos de entrada
 	std::vector<_2D::Punto<T>> puntos;
-	
+
 	//Calculo de la triangulacion
 	Delaunay<T> delaunay;
+	//Triangulos en delaunay
 	std::vector<_2D::Triangulo<T>> triangulos;
+
+	//Centros de los circulos que pasan por los triangulos
 	std::vector<_2D::Punto<T>> centrosCT;
-
-
-	//Calculo de las regiones
 	std::vector<std::vector<bool>> G; //Grafo que representa si 2 triangulos tienen un lado en comun
 	std::vector<_2D::Linea<T>> lineas; //Lineas del diagrama
-	
+	//Calculo de las regiones
+	std::vector<_2D::Poligono<T>> regiones_; //Regiones en el diagrama
+	std::vector<vector<bool>> GT; 		//grafo de delaunay
+	bool calcularRegiones_;
 public:
+	Voronoi(){
+		calcularRegiones_ = true;
+	}
+
 	void agregaPunto(const _2D::Punto<T>& p){
 		delaunay.agregaPunto(p);
+	}
+
+	void calcularRegiones(bool t){
+		calcularRegiones_ = t;
 	}
 
 
@@ -90,17 +103,23 @@ public:
 		return G;
 	}
 
+	int cantidadPuntos(){
+		return delaunay.cantidadPuntos();
+	}
+
 	std::vector<std::vector<bool>> dameGrafoTriangulacion(){
-		return delaunay.dameGrafo();
+		return GT;
 	}
 
 	void calcular(){
+		puntos = delaunay.damePuntos();
+		std::cout<<"Iniciando el Calculo de voronoi con "<<puntos.size()<<" Puntos "<<endl;
 		delaunay.calcular();
 		triangulos = delaunay.dameTriangulos();
-		puntos = delaunay.damePuntos();
+	//Calculo de los triangulos adyacentes	
 		//inicializacion del grafo
 		G = std::vector<std::vector<bool>>(triangulos.size(),std::vector<bool>(triangulos.size(),false));	
-		//Calculo de los triangulos adyacentes
+		GT = delaunay.dameGrafo();
 		for(int i=0;i<triangulos.size();i++){
 			for(int j=i+1;j<triangulos.size();j++){
 				if(comparteLado(triangulos[i],triangulos[j])){
@@ -108,10 +127,12 @@ public:
 				}
 			}
 		}	
+	//Se calculan los centros de los circulos en los 
+	// triangulos para evitar volverlos a calcular
 		for(auto t: triangulos){
 			centrosCT.push_back(_2D::Circulo<T>(t.p1,t.p2,t.p3).centro);
 		}
-
+	//Ahora las lineas, se revisa sobre el grafo de los triangulos que comparten un lado
 		for(int i=0;i<G.size();i++){
 			for(int j=i+1;j<G.size();j++){
 				if(G[i][j]){
@@ -119,6 +140,41 @@ public:
 				}
 			}
 		}
-			
+		if(calcularRegiones_){
+			vector<vector<bool>> grafoTriangulos = GT;//delaunay.dameGrafo();
+			cout<<grafoTriangulos.size()<<" "<<puntos.size()<<endl;
+			for(int i=0;i<grafoTriangulos.size();i++){
+				_2D::Poligono<T> region;
+				std::vector<_2D::Punto<T>> p;
+				for(int j=0;j<grafoTriangulos[i].size();j++){
+					if(grafoTriangulos[i][j]){
+						p.push_back(puntos[j]);
+					}
+				}
+				std::sort(p.begin(), p.end(),[&](const _2D::Punto<T>& a, const _2D::Punto<T>& b){
+					return (a-puntos[i]).angulo() < (b-puntos[i]).angulo();
+				});
+				for(int j=1;j<p.size();j++){
+					region.agregaPunto(_2D::Circulo<T>(puntos[i],p[j],p[j-1]).centro);
+				}
+				region.agregaPunto(_2D::Circulo<T>(puntos[i],p[0],p[p.size()-1]).centro);
+				std::sort(region.vertices.begin(), region.vertices.end(),[&](const _2D::Punto<T>& a, const _2D::Punto<T>& b){
+					return (a-puntos[i]).angulo() < (b-puntos[i]).angulo();
+				});
+				bool choca=false;
+				for(auto l: lineas){
+					if(region.colisiona(l)){
+						choca=true;
+						break;	
+					}
+				}
+				if(not choca)
+					regiones_.push_back(region);
+			}
+		}
+	}
+
+	std::vector<_2D::Poligono<T>> regiones(){
+		return regiones_;
 	}
 };

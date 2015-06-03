@@ -44,6 +44,17 @@ namespace _2D{
 			T norma2() const{
 				return x*x+y*y;
 			}
+
+			template<class NuevoTipo>
+			operator Punto<NuevoTipo>(){
+				return Punto<NuevoTipo>((NuevoTipo)x,(NuevoTipo)y);				
+			} 
+
+			Punto<T> rotar(T ang){
+				return Punto<T>::polar(norma(), angulo()+ang);
+			}
+	
+
 	};
 
 	template<class T>

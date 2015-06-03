@@ -6,7 +6,6 @@
 
 
 #ifdef COLOR_H
-
 	inline void glColor(const Color& c){
 		glColor3ub(c.r, c.g, c.b);
 	}
@@ -144,24 +143,51 @@
 
 #endif
 
-#ifdef RECTANGULO_H
+#ifdef RECTANGULO2D_H
 
 	template<class T>
-	inline void glDraw(const _2D::Rectangulo<T>& t, bool fill = false, int size = 0){
+	inline void glDraw(const _2D::Rectangulo<T>& r, bool fill = false, int size = 0){
 		if(fill){
 			glBegin(GL_TRIANGLES);
 				glVertex(r.inicio);
-				glVertex(t.fin.x,t.inicio.y);
-				glVertex(t.inicio.x,t.fin.y);
-				glVertex(t.fin.x,t.inicio.y);
-				glVertex(t.inicio.x,t.fin.y);
+				glVertex2f(r.fin.x,r.inicio.y);
+				glVertex2f(r.inicio.x,r.fin.y);
+				glVertex2f(r.fin.x,r.inicio.y);
+				glVertex2f(r.inicio.x,r.fin.y);
 				glVertex(r.fin);
 			glEnd();
 		}else{
-			glDraw(_2D::Linea<T>(_2D::Punto<T>(t.inicio.x,t.inicio.y),_2D::Punto<T>(t.fin.x,t.inicio.y)),size);
-			glDraw(_2D::Linea<T>(_2D::Punto<T>(t.inicio.x,t.inicio.y),_2D::Punto<T>(t.inicio.x,t.fin.y)),size);
-			glDraw(_2D::Linea<T>(_2D::Punto<T>(t.fin.x,t.fin.y),_2D::Punto<T>(t.inicio.x,t.fin.y)),size);
-			glDraw(_2D::Linea<T>(_2D::Punto<T>(t.fin.x,t.fin.y),_2D::Punto<T>(t.fin.x,t.inicio.y)),size);
+			glDraw(_2D::Linea<T>(_2D::Punto<T>(r.inicio.x,r.inicio.y),_2D::Punto<T>(r.fin.x,r.inicio.y)),size);
+			glDraw(_2D::Linea<T>(_2D::Punto<T>(r.inicio.x,r.inicio.y),_2D::Punto<T>(r.inicio.x,r.fin.y)),size);
+			glDraw(_2D::Linea<T>(_2D::Punto<T>(r.fin.x,r.fin.y),_2D::Punto<T>(r.inicio.x,r.fin.y)),size);
+			glDraw(_2D::Linea<T>(_2D::Punto<T>(r.fin.x,r.fin.y),_2D::Punto<T>(r.fin.x,r.inicio.y)),size);
+		}
+	}
+
+	template<class T>
+	inline void glDraw(const _2D::RectanguloGirado<T>& r, bool fill = false, int size = 0){
+		_2D::Punto<T> a , b, c, d, centro;
+		centro = r.centro();
+		a = centro+(r.inicio-centro).rotar(r.angulo);
+		b = (_2D::Punto<T>(r.fin.x, r.inicio.y)-centro).rotar(r.angulo)+centro;
+		c = (_2D::Punto<T>(r.inicio.x, r.fin.y)-centro).rotar(r.angulo)+centro;
+		d = centro+(r.fin-centro).rotar(r.angulo);
+
+		if(fill){
+		/*	glBegin(GL_TRIANGLES);
+				glVertex(r.inicio);
+				glVertex2f(r.fin.x,r.inicio.y);
+				glVertex2f(r.inicio.x,r.fin.y);
+				glVertex2f(r.fin.x,r.inicio.y);
+				glVertex2f(r.inicio.x,r.fin.y);
+				glVertex(r.fin);
+			glEnd();
+			*/
+		}else{
+			glDraw(_2D::Linea<T>(a,b));
+			glDraw(_2D::Linea<T>(a,c));
+			glDraw(_2D::Linea<T>(d,b));
+			glDraw(_2D::Linea<T>(d,c));
 		}
 	}
 
@@ -214,6 +240,18 @@ void glDraw(const std::vector<T>& v){
 			glDraw(e,tam);
 		}
 	}
+#endif
+
+#ifdef POLIGONO_H
+	template<class T>
+	void glDraw(const _2D::Poligono<T>& p){
+		glBegin(GL_POLYGON);
+			for(auto v: p.vertices){
+				glVertex(v);
+			}
+		glEnd();
+	}
+
 #endif
 
 #endif

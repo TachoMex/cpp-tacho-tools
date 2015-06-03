@@ -1,5 +1,6 @@
 #include <iostream>               //Entradas y salidas debugging
 #include "imagen/imagen.h"        //Exportacion de resultados
+#include "imagen/primitivas.h"    //Exportacion de resultados
 #include "voronoi.h"   	   	      //Para calcular triangulacionaciones
 #include "gl2.h"				  //Interfaz
 #include <cstdlib> 				  //Random
@@ -10,10 +11,11 @@ using namespace _2D;
 
 typedef double llint;
 
-const int SCREEN_X = 600;
-const int SCREEN_Y = 600;
-const char * WINDOW_NAME = "Voronoi";
-
+const int SCREEN_X = 1000;
+const int SCREEN_Y = 1000;
+const char * WINDOW_NAME = "VCities";
+const int ANCHURA_MANZANAS = 7;
+const int LARGO_MANZANAS = 15;
 
 
 
@@ -29,15 +31,16 @@ private:
 	//resultados
 	vector<vector<bool>> triangulacion; //Grafo que representa 2 puntos deben conectarse segun la triangulacion de delaunay
 	vector<Linea<llint>> lineas;		    //Lineas del diagrama
+	vector<Poligono<llint>> regiones;   //Poligonos de las regiones del diagrama de voronoi
+
+
 public:
-	bool cuadricula;
 	bool grafica_puntos;
-	bool grafica_triangulacion;
 	bool grafica_voronoi;
 	interfaz(){	
 	}
 	interfaz(int x, int y, int n, int m){
-		grafica_voronoi = cuadricula = grafica_puntos = grafica_triangulacion = true;
+		grafica_voronoi  = grafica_puntos = true;
 		tam = Punto<int>(x,y);
 		tamMat = Punto<int>(n,m);
 		int dx = x/n;
@@ -55,47 +58,75 @@ public:
 		voronoi.calcular();
 		puntos=voronoi.damePuntos();
 		lineas=voronoi.dameLineas();
-		triangulacion=voronoi.dameGrafoTriangulacion();
-		/*
-		//debugging, para comprobar contra un resultado exacto
-		VoronoiNoGeometrico<llint> vms(x,y,puntos,distanciaM);
-		vms.obtenerImagen().guardaBMP("vms.bmp");
-		*/		
-	}
-
-	void dibujar(){
-		int dx = tam.x/tamMat.x;
-		int dy = tam.y/tamMat.y;
-		if(cuadricula){
-			glColor(Color::blanco);
-			for(int i=1;i<tamMat.x;i++){
-				glDraw(Linea<llint>(Punto<llint>(i*dx,0),Punto<llint>(i*dx,tam.y)));
+		triangulacion=voronoi.dameGrafoTriangulacion();	
+		regiones = voronoi.regiones();
+		int tam = regiones.size();
+		int i=0;
+		for(auto region: regiones){
+			Voronoi<llint> ciudad;
+			for(auto p: puntos){
+				ciudad.agregaPunto(p);
 			}
-			for(int i=1;i<tamMat.y;i++){
-				glDraw(Linea<llint>(Punto<llint>(0,i*dy),Punto<llint>(tam.x,i*dy)));
-			}
-		}
-		if(grafica_puntos){
-			glColor(Color::rojo);
-			glDraw(puntos,5);
-		}
-		if(grafica_triangulacion){
-			int k=0;
-			for(int i=0;i<triangulacion.size();i++){
-				for(int j=i+1;j<triangulacion[i].size();j++){
-					if(triangulacion[i][j]){
-						glColor(Color::hsl(k++*17));//blanco);
-						glDraw(Linea<llint>(puntos[i],puntos[j]));
+			RectanguloGirado<llint> r = region.rectanguloRecubridorMinimo();
+			Punto<llint> centro = r.centro();
+			for(llint x = r.inicio.x+ANCHURA_MANZANAS; x<r.fin.x; x+=ANCHURA_MANZANAS){
+				for(llint y = r.inicio.y+LARGO_MANZANAS; y<r.fin.y; y+=LARGO_MANZANAS){
+					Punto<llint> p(x,y);
+					p = (p-centro).rotar(r.angulo)+centro;
+					if(region.contiene(p)){
+						ciudad.agregaPunto(p);
+					//	cout<<":P"<<endl;
 					}
 				}
-			}			
+			}
+			ciudad.calcularRegiones(false);
+			cout<<"Region: "<<i++<<"/"<<tam<<"::"<<ciudad.cantidadPuntos()<<endl;
+			if(ciudad.cantidadPuntos()<350){	
+				ciudad.calcular();
+			}
+			vector<Linea<llint>> temp=ciudad.dameLineas();
+			glClear(GL_COLOR_BUFFER_BIT);
+			glColor(Color::verde);
+			glDraw(temp);
+			glutSwapBuffers();
+			glFlush();
+			this_thread::sleep_for(chrono::seconds(1));		
+			lineas.insert(lineas.end(),temp.begin(), temp.end());
 		}
+		cout<<"Fin"<<endl;
+	}
+
+
+	void dibujar(){
+		cout<<"Inicia dibujo"<<endl;
+		cout<<"Cantidad de lineas: "<<lineas.size()<<endl;
+		glClear(GL_COLOR_BUFFER_BIT);
 		if(grafica_voronoi){
 			int k=0;
 			glColor(Color::verde);
 			glDraw(lineas);		
 		}
-		
+		if(grafica_puntos){
+			glColor(Color::rojo);
+			glDraw(puntos,5);
+		}
+		/*
+		int k=0;
+		Imagen I;
+		glReadPixels(I);
+		for(auto region: regiones){
+			glDrawPixels(I);
+			glColor(Color::azul);
+			glDraw(region);		
+			glColor(Color::morado);
+			glDraw(region.rectanguloRecubridorMinimo());
+			glutSwapBuffers();
+			glFlush();
+			this_thread::sleep_for(chrono::seconds(1));
+		}
+		*/
+		glutSwapBuffers();
+		glFlush();
 	}
 };
 
@@ -110,12 +141,6 @@ void renderFunction(){
 
 void eventoTeclado(unsigned char k, int x, int y){
 	switch(k){
-		case 'g':
-			vs.cuadricula^=true;
-			break;
-		case 't':
-			vs.grafica_triangulacion^=true;
-			break;
 		case 'p':
 			vs.grafica_puntos^=true;
 			break;
@@ -127,8 +152,6 @@ void eventoTeclado(unsigned char k, int x, int y){
 }
 
 int main(int argc, char** argv){ 
-	srand(time(NULL));
-	vs = interfaz(SCREEN_X,SCREEN_Y,5,5);
 	glutInit(&argc,argv); 
 	glutInitDisplayMode(GLUT_DOUBLE); 
 	glutInitWindowSize(SCREEN_X,SCREEN_Y); 
@@ -141,6 +164,8 @@ int main(int argc, char** argv){
 	glFlush(); 
 	glutDisplayFunc(renderFunction); 
 	glutKeyboardFunc(eventoTeclado); 
+	srand(time(NULL));
+	vs = interfaz(SCREEN_X,SCREEN_Y,7,7);
 	glutMainLoop(); 
 	return 0; 
 } 
